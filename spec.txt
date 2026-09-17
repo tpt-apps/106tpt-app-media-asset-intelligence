@@ -1,0 +1,1106 @@
+TPT App Media Asset Intelligence
+
+1. Product Definition
+
+Product name: TPT Media Asset Intelligence
+Repository: tpt-app-media-asset-intelligence
+Product family: TPT Apps
+Category: Local-first media asset management, search, and archive intelligence
+Primary distribution: Offline desktop application with an optional background indexing service
+Secondary interfaces: CLI for batch indexing and scripted search/export
+Target platforms: Windows first; Linux second (important for NAS-adjacent/server deployment); macOS only when the underlying TPT media stack is sufficiently mature
+
+1.1 Executive summary
+
+TPT Media Asset Intelligence is a native, local-first application that answers a question every production company with a growing media archive eventually asks:
+
+What do we actually have, where is it, and how do I find the exact clip I need?
+
+The application indexes a media archive — local disks, NAS shares, project folders accumulated over years — and turns it into something searchable, understood, and maintainable: technical metadata, thumbnails, waveforms, proxies, duplicate groups, scene boundaries, tags, and (optionally) transcripts and speaker labels.
+
+The core proposition is:
+
+Find, understand, organise, and process your entire media archive — without uploading it anywhere.
+
+The application is not a video editor, not an enterprise media-asset-management (MAM) platform requiring IT deployment, and not a general-purpose file manager. Its value is:
+
+Turn terabytes of unsorted or loosely organised media into a searchable, health-monitored archive, on the hardware the customer already owns.
+
+The product should process and index media entirely on the user's machine/local network by default. Any AI-assisted search or tagging beyond the bundled local models is strictly optional and must be explicitly enabled.
+
+2. Commercial Objective
+
+The initial product should target organisations for whom "we can't find our own footage" or "we don't know what's on this drive" is a real, recurring cost.
+
+Primary customer profiles:
+
+Production companies with large local/NAS media archives
+
+Post-production facilities
+
+Broadcasters and broadcast archives
+
+Corporate media/communications departments
+
+Libraries, museums, and cultural-heritage archives
+
+Stock footage libraries and content licensors
+
+Documentary and journalism organisations with large interview/footage libraries
+
+Educational institutions with recorded-lecture archives
+
+The product should be positioned as professional archive infrastructure, priced and supported accordingly, rather than as a consumer photo/video organiser.
+
+2.1 Initial pricing hypothesis
+
+Pricing is a commercial hypothesis and must be validated before launch.
+
+Suggested initial structure:
+
+Edition
+
+Indicative price
+
+Intended buyer
+
+Standard
+
+$499
+
+Individual archive/small team, single machine
+
+Professional
+
+$1,299
+
+Production team indexing a shared NAS/server volume
+
+Facility
+
+$2,499+
+
+Multi-user facility, larger archive scale
+
+Avoid recurring cloud infrastructure costs in the core product. A perpetual licence should be supported. Any optional cloud AI features (section 10) must be priced and disclosed separately from the base licence, since they may carry real pass-through usage costs.
+
+2.2 Competitive positioning
+
+Existing categories already address parts of this problem. Enterprise media-asset-management platforms (Iconik, CatDV, Axle.ai and similar) provide deep cataloguing, proxy workflows, and search, but are frequently priced, licensed, and deployed for facility/enterprise IT operations rather than a single production company wanting fast local answers. General-purpose digital-asset-management tools (Eagle and similar) and NLE-integrated media browsers (Adobe Bridge, Premiere's media browser) provide lightweight organisation but little technical depth or archive-scale performance.
+
+TPT should therefore not attempt to win merely by adding another thumbnail grid. The differentiators should be:
+
+Native Rust implementation capable of indexing very large archives without enterprise IT deployment.
+
+Local-first operation — the index and derivatives live on the customer's own storage, not a vendor cloud.
+
+The same technical-analysis depth used in TPT Media QC and TPT Media Forensics (accurate codec/stream/technical metadata), rather than shallow thumbnail-and-filename cataloguing.
+
+A clear, disclosed boundary between local, offline AI (the default) and optional cloud AI (strictly opt-in), at a time when most "AI-powered" asset tools assume cloud processing as the default.
+
+Reuse of tpt-av-asset's proxy/thumbnail/waveform/job infrastructure, already proven inside three other TPT Apps, giving this product a head start most competitors building from scratch do not have.
+
+Simpler licensing and deployment than enterprise MAM platforms, while still offering facility-scale performance.
+
+3. Product Principles
+
+3.1 Local-first indexing
+
+The archive index, and all derivatives generated from it (thumbnails, proxies, waveforms, tags), live on the user's own machine or local network storage.
+
+The application must not require:
+
+uploading original media to a vendor cloud
+
+a hosted/managed index
+
+account creation to perform local indexing and search
+
+mandatory internet access for core indexing and search
+
+Internet connectivity may optionally be used for:
+
+software updates
+
+licence activation
+
+the explicitly opt-in cloud AI features described in section 10
+
+The user must be able to fully disable outbound network access and still index, search, tag (via local models), and browse the entire archive.
+
+3.2 Deterministic technical analysis
+
+Technical metadata extraction (codec, container, resolution, duration, stream layout) must produce the same result for the same input bytes and application version, consistent with the deterministic-analysis principle used in TPT Media QC.
+
+3.3 AI features are additive, not required
+
+This is a defining principle for this product specifically, given how central "semantic search" and "auto-tagging" are to its pitch.
+
+The application must be fully useful — indexing, deterministic search, duplicate detection, scene detection, and basic local-model tagging — with zero cloud AI involvement.
+
+Any cloud-AI-assisted feature (higher-quality semantic search, higher-quality auto-tagging) must be:
+
+off by default
+
+explicitly enabled per feature, not via one global "enable AI" switch
+
+accompanied by a clear, itemised disclosure of what data would be sent, to which provider, and when
+
+revocable at any time without losing previously generated local-model results
+
+3.4 Non-destructive to the source archive
+
+The application indexes and generates derivatives; it must never modify, move, rename, or delete original source files without an explicit, reviewed user action.
+
+Original archive
+        |
+        v
+   Index + derivatives (separate storage)
+        |
+        v
+   Search / browse / review
+
+3.5 Explain every tag and every match
+
+Automatically generated tags and semantic search results must never be presented as unambiguous fact.
+
+Every tag must record:
+
+its source: manual, local-model, or cloud-model
+
+a confidence value where applicable
+
+the model/version that produced it
+
+Every semantic search result must be explainable in terms of similarity score, not presented as a binary yes/no match.
+
+3.6 Engine and presentation are separate
+
+The indexing/search engine must be usable without the desktop GUI, so that large archives can be indexed via CLI/service on a machine without a GUI session (e.g. a headless NAS-adjacent box).
+
+Architecture:
+
+              Media Asset Intelligence Application
+                          |
+             +------------+-------------+
+             |                          |
+          Desktop                    CLI/Service
+             |                          |
+             +------------+-------------+
+                          |
+                  Indexing/Search Engine
+                          |
+        +------------------+------------------+
+        |                  |                  |
+    Technical           Derivative          Tagging/
+    metadata            generation          Search index
+    extraction          (thumb/proxy/
+                         waveform)
+
+4. Proposed Repository Structure
+
+tpt-app-media-asset-intelligence/
+├── Cargo.toml
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── docs/
+│   ├── architecture.md
+│   ├── index-model.md
+│   ├── search-model.md
+│   ├── tagging-model.md
+│   ├── ai-disclosure.md
+│   └── archive-health.md
+├── crates/
+│   ├── tpt-app-media-asset-intelligence-core/
+│   ├── tpt-app-media-asset-intelligence-model/
+│   ├── tpt-app-media-asset-intelligence-ingest/
+│   ├── tpt-app-media-asset-intelligence-dedupe/
+│   ├── tpt-app-media-asset-intelligence-scenes/
+│   ├── tpt-app-media-asset-intelligence-tagging/
+│   ├── tpt-app-media-asset-intelligence-search/
+│   ├── tpt-app-media-asset-intelligence-health/
+│   ├── tpt-app-media-asset-intelligence-cli/
+│   ├── tpt-app-media-asset-intelligence-service/
+│   ├── tpt-app-media-asset-intelligence-tauri/
+│   └── tpt-app-media-asset-intelligence-test/
+├── fixtures/
+│   ├── synthetic-archive-small/
+│   ├── synthetic-archive-large/
+│   ├── duplicates/
+│   ├── corrupt/
+│   └── mixed-formats/
+└── tests/
+    ├── integration/
+    ├── golden/
+    └── scale/
+
+The exact workspace split can be simplified if the project is initially small. The important architectural boundary is between the deterministic indexing/search core and the application shells (desktop, CLI, service) that host it.
+
+5. Foundation Dependencies
+
+The application should reuse TPT foundations rather than duplicate media decoding, caching, or job infrastructure.
+
+5.1 Primary dependency
+
+tpt-av-asset
+
+The central foundation for this product, more directly than for any other TPT App.
+
+Responsibilities already provided:
+
+persistent asset metadata
+
+thumbnail cache
+
+waveform cache
+
+proxy generation
+
+embedded media database
+
+filesystem monitoring/watch folders
+
+background jobs
+
+resumable processing
+
+cache invalidation
+
+This product is, in large part, the commercial surface built directly on top of tpt-av-asset's existing infrastructure — infrastructure that TPT Media QC, TPT Media Forensics, and TPT Voice Studio already rely on internally for caching and background jobs. Media Asset Intelligence is where that infrastructure becomes the product itself, rather than a supporting layer underneath another product's workflow.
+
+5.2 Supporting dependencies
+
+tpt-kinetix
+
+Video decode/frame access.
+
+Responsibilities:
+
+frame extraction for thumbnails
+
+frame access for scene-change and duplicate/near-duplicate detection
+
+technical metadata extraction (codec, resolution, frame rate, colour)
+
+tpt-cadence
+
+Audio decode.
+
+Responsibilities:
+
+waveform generation
+
+audio technical metadata extraction
+
+tpt-visual
+
+Visual analysis foundation.
+
+Responsibilities:
+
+scene-change detection
+
+perceptual/near-duplicate frame detection
+
+visual similarity features usable by local embedding-based search
+
+tpt-voice
+
+Optional speech analysis foundation, explicitly optional given its computational cost across an entire archive.
+
+Responsibilities when enabled:
+
+transcription (feeding full-text search)
+
+speaker diarisation (feeding speaker-based search/filtering)
+
+Must be toggleable per-archive or per-import, not mandatory for baseline indexing.
+
+tpt-av-test
+
+Testing/conformance foundation.
+
+Responsibilities:
+
+golden fixture archives with known expected index/tag/duplicate results
+
+deterministic regression tests
+
+fuzzing harnesses reused from the other TPT Apps
+
+The commercial application must add product-level indexing, search, tagging, and archive-health logic on top of this foundation rather than duplicating decode or caching work that already exists in these crates.
+
+5.3 Relationship to sibling TPT Apps
+
+Media Asset Intelligence is designed to optionally consume events from, and surface data alongside, the other TPT Apps:
+
+TPT Media QC results (pass/fail, findings) can be imported as searchable, filterable metadata on an asset.
+
+TPT Media Forensics findings can likewise be surfaced as archive metadata.
+
+TPT Voice Studio transcripts, where a project has already been transcribed, can be reused rather than re-transcribed.
+
+These integrations must be optional and must degrade gracefully when a sibling application's data is not present.
+
+6. Core Domain Model
+
+6.1 Archive
+
+struct Archive {
+    id: ArchiveId,
+    name: String,
+    roots: Vec<PathBuf>,
+    watch_enabled: bool,
+    ai_settings: AiSettings,
+}
+
+struct AiSettings {
+    local_tagging_enabled: bool,
+    cloud_tagging_enabled: bool,
+    cloud_provider: Option<CloudAiProvider>,
+    cloud_semantic_search_enabled: bool,
+}
+
+Cloud-related fields default to disabled/None.
+
+6.2 Asset
+
+struct Asset {
+    id: AssetId,
+    archive: ArchiveId,
+    path: PathBuf,
+    fingerprint: AssetFingerprint,
+    size_bytes: u64,
+    modified_time: SystemTime,
+    media_type: MediaType,
+    technical_metadata: TechnicalMetadata,
+}
+
+6.3 Derivative
+
+enum DerivativeKind {
+    Thumbnail,
+    Proxy,
+    Waveform,
+}
+
+struct Derivative {
+    id: DerivativeId,
+    asset: AssetId,
+    kind: DerivativeKind,
+    path: PathBuf,
+    generated_with_version: String,
+}
+
+6.4 Tag
+
+enum TagSource {
+    Manual,
+    LocalModel { model: String, version: String },
+    CloudModel { provider: String, model: String },
+}
+
+struct Tag {
+    id: TagId,
+    asset: AssetId,
+    label: String,
+    source: TagSource,
+    confidence: Option<f32>,
+}
+
+6.5 Duplicate Group
+
+struct DuplicateGroup {
+    id: DuplicateGroupId,
+    members: Vec<AssetId>,
+    match_kind: MatchKind,
+    similarity: f32,
+}
+
+enum MatchKind {
+    ExactHash,
+    PerceptualNearDuplicate,
+    AudioFingerprint,
+}
+
+6.6 Scene
+
+struct Scene {
+    id: SceneId,
+    asset: AssetId,
+    start: Duration,
+    end: Duration,
+    detection_method: SceneDetectionMethod,
+}
+
+6.7 Search Index Entry
+
+struct SearchIndexEntry {
+    asset: AssetId,
+    text_fields: Vec<String>,
+    tags: Vec<TagId>,
+    embedding: Option<Embedding>,
+    embedding_source: Option<TagSource>,
+}
+
+7. Ingestion and Indexing Pipeline
+
+The pipeline mirrors the two-pass strategy used in TPT Media QC: a fast pass for immediate usefulness, a slower pass for derivatives and optional AI processing.
+
+Filesystem/watch-folder scan
+  |
+  v
+Fingerprint
+  |
+  v
+Technical metadata extraction   <-- Pass 1: fast, always runs
+  |
+  v
+Search index (metadata/filename)
+  |
+  v
+Derivative generation (thumbnail/proxy/waveform)   <-- Pass 2
+  |
+  v
+Duplicate detection
+  |
+  v
+Scene detection
+  |
+  v
+Local-model tagging (default) / Optional cloud tagging (opt-in)
+  |
+  v
+Optional transcription (tpt-voice, opt-in)
+  |
+  v
+Search index update (full-text + tags + optional embeddings)
+
+7.1 Two-pass rationale
+
+Pass 1 makes an archive searchable by filename, path, and technical metadata within seconds of a scan starting, before any expensive processing runs. Pass 2 progressively enriches the index. A user should never have to wait for full processing to complete before performing a basic search.
+
+8. Duplicate and Near-Duplicate Detection
+
+Detect, in layers:
+
+Exact duplicates via content hash (fast, deterministic).
+
+Perceptual near-duplicates via frame-level similarity (tpt-visual) — useful for re-exports, transcodes, and slightly trimmed copies of the same source.
+
+Audio fingerprint matches (tpt-cadence/tpt-dsp-based) for audio-only or audio-dominant duplicate detection.
+
+Results are surfaced as reviewable groups:
+
+Duplicate Group #14 (3 files, 98% similar)
+─────────────────────────────────────────
+interview_final.mov        4.1 GB
+interview_final_v2.mov     4.1 GB
+interview_FINAL_FINAL.mov  3.9 GB
+
+[Review] [Mark as reviewed] [Choose keeper]
+
+The application must never automatically delete a file from a duplicate group. Deduplication actions are always explicit and reviewable, with an undo path.
+
+9. Scene Detection and Content Segmentation
+
+Baseline (MVP): deterministic, technical scene-change detection using frame-difference/perceptual-hash techniques via tpt-visual, identical in spirit to the scene-change analysis approach in TPT Media Forensics.
+
+00:00:00
+     │
+     ├── Scene
+     │
+00:01:32
+     │
+     ├── Scene
+     │
+00:04:18
+     │
+     └── Scene
+
+This is explicitly a technical/statistical detection, not a semantic understanding of content ("this scene is an interview" is a tagging concern, described in section 11, not a scene-detection concern).
+
+10. Search Model
+
+Search is layered so that the most reliable results never depend on optional AI.
+
+Layer 1 — Deterministic metadata search (always available)
+
+filename, path, extension
+
+codec, container, resolution, frame rate, duration
+
+date modified/created
+
+manual tags
+
+Layer 2 — Full-text search (available once processed)
+
+transcripts (if transcription is enabled)
+
+local-model tag labels
+
+user notes
+
+Layer 3 — Semantic/similarity search (optional)
+
+local embedding models by default, if enabled
+
+optional cloud embedding models, strictly opt-in
+
+Example search:
+
+Search: "press conference outdoors, two speakers"
+
+Layer 1/2 matches: filename/tag/transcript text containing these terms
+Layer 3 matches (if enabled): visually/semantically similar clips
+                               regardless of filename or tags
+
+10.1 Cloud AI disclosure
+
+Before a user enables cloud-assisted semantic search or tagging, the application must present an explicit disclosure, for example:
+
+Enabling cloud semantic search will send:
+  - a compact visual/audio embedding derived from each processed
+    asset (not the original media file)
+  - to: [selected provider]
+
+This setting is OFF by default and can be disabled at any time.
+Previously generated local results are not affected.
+
+The user must explicitly confirm this per archive (or per import job), and the setting must never be silently enabled by an update or a "recommended settings" prompt.
+
+11. Automatic Tagging
+
+Default (local): a bundled local model set produces object/scene/label tags from thumbnails and sampled frames, and basic audio-event tags from waveforms, entirely offline.
+
+Optional (cloud, opt-in): a higher-quality cloud model can be used for tagging when explicitly enabled, subject to the same disclosure requirement as semantic search.
+
+Every tag displays its source and, where applicable, its confidence:
+
+person        (local-model, 0.91)
+outdoor       (local-model, 0.88)
+press-event   (cloud-model, 0.95)
+interview     (manual)
+
+Tags must be editable and deletable by the user regardless of source. A rejected auto-tag should be recorded so that future re-tagging passes do not silently reintroduce it without at least flagging that it was previously rejected.
+
+12. Archive Health
+
+Distinct from per-file quality control (that is TPT Media QC's role — this product should reference rather than duplicate that positioning), archive health covers the health of the archive as a collection:
+
+missing files (indexed but no longer present on disk)
+
+broken/relinked paths (moved files)
+
+unreadable/corrupt assets encountered during indexing
+
+orphaned derivatives (proxy/thumbnail with no matching source asset)
+
+storage growth and duplicate-waste trends over time
+
+Archive Health
+──────────────────────────────
+Total assets            48,201
+Missing files                12
+Corrupt/unreadable            3
+Duplicate waste           1.8 TB
+Orphaned derivatives         41
+
+[View details]
+
+13. Desktop UI
+
+Use a native Tauri application.
+
+The UI should have these primary screens.
+
+13.1 Archive Browser
+
+Grid/list view of assets with thumbnails, filterable by technical metadata, tags, and folder location.
+
+13.2 Search
+
+Unified search bar with filter chips for metadata, tags, and (if enabled) semantic search, with each result showing why it matched (matched field, tag, or similarity score).
+
+13.3 Asset Inspector
+
+File information, technical metadata, tags (with source/confidence), derivative previews, and duplicate-group membership.
+
+13.4 Duplicate Review
+
+As described in section 8, with keeper selection and reviewed/unreviewed status tracking.
+
+13.5 Tagging Review
+
+Review queue for auto-generated tags, with accept/reject/edit actions and bulk operations.
+
+13.6 Archive Health Dashboard
+
+As described in section 12.
+
+13.7 Indexing Queue
+
+Shows active/queued indexing, derivative-generation, and tagging jobs, with pause/resume/cancel controls, consistent with the job-queue UI pattern used in TPT Media QC.
+
+14. CLI and Automation Interface
+
+The CLI must use the same indexing/search engine as the GUI.
+
+Example:
+
+tpt-media-asset-intel index \
+  --archive ./archive-config.yaml \
+  --roots /mnt/media-nas/projects
+
+Search:
+
+tpt-media-asset-intel search \
+  --archive main \
+  --query "codec:prores AND tag:interview"
+
+Deduplicate:
+
+tpt-media-asset-intel dedupe \
+  --archive main \
+  --report duplicates.json
+
+Tag (local models only unless explicitly flagged):
+
+tpt-media-asset-intel tag \
+  --archive main \
+  --local-only
+
+Machine-readable result:
+
+{
+  "archive": "main",
+  "assets_indexed": 48201,
+  "duplicates_found": 214,
+  "cloud_ai_used": false
+}
+
+Exit codes:
+
+0 = SUCCESS
+1 = PARTIAL_SUCCESS
+2 = INDEXING_FAILED
+3 = SEARCH_FAILED
+4 = CONFIGURATION_ERROR
+5 = INPUT_ERROR
+6 = INTERNAL_ERROR
+
+The exit-code contract must remain stable, and the CLI must make it impossible to accidentally invoke a cloud AI feature without an explicit flag.
+
+15. Local API
+
+The desktop application may expose an optional localhost-only API for integration with other local tools (e.g. an NLE plugin, or another TPT App).
+
+Default:
+
+127.0.0.1
+
+Never bind externally by default.
+
+Potential endpoints:
+
+GET  /archives/:id/search
+GET  /assets/:id
+POST /archives/:id/reindex
+GET  /jobs/:id
+GET  /health
+
+The API should be disabled by default unless explicitly enabled.
+
+16. Persistence
+
+Use SQLite for the asset index, tags, duplicate groups, scene data, and job state.
+
+Store:
+
+archives and their roots/settings
+
+assets (paths and fingerprints, not raw media)
+
+derivatives (paths to cached thumbnails/proxies/waveforms)
+
+tags and their source/confidence
+
+duplicate groups and review status
+
+archive health snapshots
+
+user preferences and AI-enablement settings
+
+Do not store original media inside the application database. Cached derivatives should be stored separately from the database and from the original archive.
+
+17. Security and Privacy
+
+The application indexes potentially large, sensitive, or commercially valuable media archives.
+
+Requirements:
+
+no mandatory network access for indexing, deterministic search, or local-model tagging
+
+no cloud upload of original media ever, under any setting
+
+cloud AI features send only derived data (e.g. compact embeddings), never original files, and only when explicitly enabled
+
+no external telemetry of filenames, tags, or archive contents
+
+safe handling of malformed/corrupt media during indexing
+
+strict path validation, especially for watch-folder and NAS-mounted roots
+
+no automatic reorganisation, renaming, or deletion of source files without explicit user confirmation
+
+Media parsers must be fuzz tested, consistent with the approach used in the other TPT Apps.
+
+18. Scale and Performance Targets
+
+Initial targets should be treated as engineering goals rather than guarantees.
+
+Indexing
+
+Begin surfacing basic search results (Pass 1) within seconds of starting a scan, regardless of total archive size.
+
+Support archives in the hundreds of thousands of files / multiple terabytes without requiring the full index to be memory-resident.
+
+Concurrency
+
+Use available CPU cores for parallel technical-metadata extraction and derivative generation, while remaining responsive for interactive search during a background scan.
+
+Resumability
+
+An interrupted scan (crash, restart, unplugged NAS) must resume without re-processing already-indexed, unchanged assets.
+
+Storage
+
+Derivative storage growth must be predictable and visible to the user (see Archive Health), since proxies/thumbnails/waveforms for a large archive can themselves become substantial.
+
+19. Testing Strategy
+
+19.1 Unit tests
+
+Every pipeline stage (fingerprinting, metadata extraction, derivative generation, duplicate detection, scene detection, tagging, search indexing) must have:
+
+valid input
+
+invalid input
+
+boundary case
+
+malformed input
+
+expected result
+
+19.2 Golden fixture archives
+
+Maintain synthetic archives with known expected results:
+
+fixtures/
+├── synthetic-archive-small/
+├── synthetic-archive-large/
+├── duplicates/
+├── corrupt/
+└── mixed-formats/
+
+Each fixture must document expected index counts, duplicate groups, and scene boundaries.
+
+19.3 Scale/performance tests
+
+Maintain a large synthetic archive fixture used specifically to catch performance regressions in indexing throughput and memory usage.
+
+19.4 AI-boundary tests
+
+Explicit automated tests confirming that:
+
+no network call occurs during indexing, tagging, or search when cloud AI settings are disabled (the default)
+
+enabling cloud AI features requires the documented disclosure/confirmation flow
+
+disabling cloud AI after use does not delete or invalidate previously generated local-model tags
+
+19.5 Fuzzing
+
+Fuzz:
+
+media container/metadata parsers
+
+archive-config and search-query parsers
+
+CLI arguments
+
+Reuse tpt-av-test where possible.
+
+19.6 Regression tests
+
+Every production bug should produce a permanent regression fixture.
+
+20. MVP
+
+The first commercial MVP should not implement every possible archive-intelligence feature.
+
+MVP scope:
+
+Ingestion
+
+filesystem/watch-folder scanning
+
+recursive import of existing archive structures
+
+incremental/resumable indexing
+
+Technical indexing
+
+codec/container/resolution/duration/technical metadata extraction
+
+thumbnail, proxy, and waveform generation
+
+Deduplication
+
+exact-hash duplicate detection
+
+perceptual near-duplicate detection
+
+reviewable duplicate groups (no auto-delete)
+
+Content structure
+
+deterministic scene-change detection
+
+Tagging
+
+local-model-based automatic tagging with visible confidence and source
+
+manual tagging
+
+Search
+
+metadata/filename search
+
+full-text search over tags and manual notes
+
+Archive health
+
+missing/broken/corrupt asset detection
+
+orphaned derivative detection
+
+UX
+
+archive browser, search, asset inspector, duplicate review, tagging review, health dashboard, indexing queue
+
+Automation
+
+CLI batch indexing, search, and dedupe
+
+Explicitly out of MVP scope: any cloud AI feature (semantic search or cloud-assisted tagging), transcription/speaker-detection integration via tpt-voice, multi-user/facility permissions, plugin SDK.
+
+This is enough to deliver a commercially credible, fully offline archive-intelligence product, with the opt-in AI layer clearly reserved for Phase 2 rather than blurring the MVP's "works with zero cloud dependency" guarantee.
+
+21. Post-MVP
+
+Phase 2:
+
+opt-in cloud-assisted tagging and semantic search, with the disclosure flow from section 10.1
+
+local embedding-based semantic/similarity search
+
+transcription and speaker-detection integration via tpt-voice
+
+import of TPT Media QC/Forensics findings as searchable archive metadata
+
+richer archive-health trend reporting over time
+
+Phase 3:
+
+multi-user/facility permissions and shared archive access
+
+plugin SDK for custom local taggers/classifiers
+
+distributed/NAS-cluster indexing for very large, multi-site archives
+
+Cloud infrastructure beyond the explicitly opt-in AI features should not be introduced unless customers demonstrate a real need.
+
+22. Product Differentiation Roadmap
+
+Level 1 — Cataloguing
+
+"Do I have a searchable list of what's in this archive?"
+
+Level 2 — Technical Understanding
+
+"Do I know the technical properties of every asset, not just its filename?"
+
+Level 3 — Archive Hygiene
+
+"Can I find duplicates and broken files, and reclaim wasted storage?"
+
+Level 4 — Content Understanding
+
+"Can I find footage by what's actually in it, not just its filename?"
+
+Level 5 — Trustworthy AI Assistance
+
+"Can I use AI-assisted search and tagging without losing control over what leaves my machine?"
+
+The final level is the important differentiator against both "no AI" legacy DAM tools and "cloud-only AI" modern competitors.
+
+23. Commercial Product Packaging
+
+Standard
+
+single machine, single archive
+
+full technical indexing, dedupe, scene detection
+
+local-model tagging
+
+deterministic + full-text search
+
+CLI
+
+one-machine licence
+
+Professional
+
+shared NAS/server archive roots
+
+batch CLI indexing at scale
+
+priority updates
+
+Facility
+
+multiple local machines/users against a shared archive index
+
+advanced archive-health reporting
+
+commercial support
+
+Do not build Facility-tier multi-user features until there is evidence customers need them.
+
+24. Strategic Product Boundary
+
+Do not turn this into:
+
+a full enterprise MAM with mandatory multi-user workflow/approval systems
+
+a video editor or NLE
+
+a general-purpose file manager or backup tool
+
+a cloud-hosted media platform
+
+It may generate proxies and thumbnails because that is necessary for browsing and search. But the product's centre of gravity must remain:
+
+Index
+Deduplicate
+Understand
+Search
+Maintain
+
+25. Definition of Done
+
+The first release is ready for paid users when:
+
+A user can install the application without development tooling.
+
+A user can point the application at an existing archive (local disk or NAS share) and begin indexing.
+
+Basic metadata/filename search returns results within seconds of a scan starting, before full processing completes.
+
+Thumbnails, proxies, and waveforms are generated in the background without blocking the UI.
+
+Exact and perceptual duplicate detection produces reviewable groups, with no automatic deletion.
+
+Scene-change detection runs deterministically on indexed video assets.
+
+Local-model auto-tagging runs entirely offline and shows source/confidence on every tag.
+
+No network call occurs during indexing, tagging, or search unless a cloud AI feature has been explicitly enabled by the user.
+
+Archive health correctly identifies missing, broken, corrupt, and orphaned-derivative assets in a test archive.
+
+An interrupted scan resumes without re-processing unchanged, already-indexed assets.
+
+The CLI can index, search, and dedupe using the same engine as the GUI.
+
+A corrupt or malformed media file cannot crash an indexing run.
+
+Golden fixture archives cover small, large, duplicate-heavy, corrupt, and mixed-format cases.
+
+Fuzz testing covers media/metadata parsers and the search-query parser.
+
+Performance has been benchmarked against a large synthetic archive (hundreds of thousands of files).
+
+A clean-machine installation has been tested.
+
+26. Recommended Implementation Order
+
+Establish Cargo workspace and application shell.
+
+Integrate tpt-av-asset and enumerate its existing asset/derivative/job capabilities.
+
+Implement the archive/asset domain model on top of tpt-av-asset.
+
+Implement filesystem/watch-folder scanning and fingerprinting.
+
+Implement technical metadata extraction via tpt-kinetix/tpt-cadence.
+
+Implement Pass 1 metadata/filename search.
+
+Implement thumbnail/proxy/waveform derivative generation.
+
+Implement exact-hash duplicate detection.
+
+Implement perceptual near-duplicate detection via tpt-visual.
+
+Implement deterministic scene-change detection.
+
+Implement local-model automatic tagging with source/confidence tracking.
+
+Implement full-text search over tags/notes.
+
+Implement archive health checks.
+
+Implement SQLite persistence for the full index.
+
+Implement the indexing job queue and resumability.
+
+Implement the CLI (index, search, dedupe, tag).
+
+Implement the desktop archive browser, search, and asset inspector.
+
+Implement the duplicate review and tagging review screens.
+
+Implement the archive health dashboard.
+
+Add golden fixture archive test suite.
+
+Add scale/performance regression tests against a large synthetic archive.
+
+Add AI-boundary tests confirming no network calls fire with cloud AI disabled.
+
+Add fuzzing for media and query parsers.
+
+Harden error handling and failure isolation.
+
+Package Windows release; validate against a real large local/NAS archive.
+
+Run a private beta with a real production company or archive team.
+
+Only then implement Phase 2 opt-in cloud AI features and local embedding-based semantic search.
+
+27. Strategic Constraint
+
+Do not attempt to match every feature of enterprise MAM platforms on version 1.
+
+Those platforms have years of workflow, permissions, and integration depth aimed at large facility IT deployments. TPT's first advantage should instead be:
+
+A fast, local-first, offline-capable archive intelligence tool that a production company can run on hardware it already owns, with technical-analysis depth borrowed from the rest of the TPT AV stack, and an explicit, trustworthy boundary around when — if ever — anything leaves the machine.
+
+Then use the open TPT foundation, and the growing family of TPT Apps built on it, to expand into transcription-aware search, opt-in semantic AI, and eventually facility-scale deployment. The commercial application should be the place where an organisation's entire media archive finally becomes something they can search with confidence, on their own terms.
