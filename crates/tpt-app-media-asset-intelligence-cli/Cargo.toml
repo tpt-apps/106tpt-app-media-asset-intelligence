@@ -1,0 +1,23 @@
+[package]
+name = "tpt-app-media-asset-intelligence-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "tpt-media-asset-intel"
+path = "src/main.rs"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
+tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
+tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intelligence-ingest" }
+tpt-app-media-asset-intelligence-dedupe = { path = "../tpt-app-media-asset-intelligence-dedupe" }
+tpt-app-media-asset-intelligence-scenes = { path = "../tpt-app-media-asset-intelligence-scenes" }
+tpt-app-media-asset-intelligence-tagging = { path = "../tpt-app-media-asset-intelligence-tagging" }
+tpt-app-media-asset-intelligence-search = { path = "../tpt-app-media-asset-intelligence-search" }
+tpt-app-media-asset-intelligence-health = { path = "../tpt-app-media-asset-intelligence-health" }
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
