@@ -4,6 +4,16 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Real TPT AV foundation integration. Optional so `cargo test` stays
+# offline-fast; CI enables `--features tpt` for the wired build.
+tpt = [
+  "dep:tpt-av-asset-utils",
+  "dep:tpt-kinetix-core",
+  "dep:tpt-av-visual-utils",
+]
+
 [dependencies]
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 serde.workspace = true
@@ -11,3 +21,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 chrono.workspace = true
 uuid.workspace = true
+tpt-av-asset-utils = { workspace = true, optional = true }
+tpt-kinetix-core = { workspace = true, optional = true }
+tpt-av-visual-utils = { workspace = true, optional = true }

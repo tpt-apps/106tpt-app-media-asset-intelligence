@@ -1,6 +1,9 @@
-//! Deterministic scene-change detection scaffold (spec §9).
-//! Full frame-difference/pHash analysis plugs in via tpt-visual; this
-//! crate owns the deterministic boundary-splitting contract.
+//! Deterministic scene-change detection (spec §9): score-threshold
+//! splitting over frame differences, plus a frame-fed entry point that
+//! decodes real RGBA frames via `VideoSource` (`--features tpt`).
+
+#[cfg(feature = "tpt")]
+pub mod frames;
 
 use tpt_app_media_asset_intelligence_model::{AssetId, Scene};
 

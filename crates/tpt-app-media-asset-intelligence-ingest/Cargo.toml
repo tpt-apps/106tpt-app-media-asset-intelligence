@@ -4,6 +4,28 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Real TPT AV foundation integration (probe/import/pipeline/watcher/cache).
+# Optional so default `cargo test` stays offline-fast.
+tpt = [
+  "dep:tpt-av-asset-utils",
+  "dep:tpt-av-asset-db",
+  "dep:tpt-av-asset-cache",
+  "dep:tpt-av-asset-pipeline",
+  "dep:tpt-av-asset-proxy",
+  "dep:tpt-av-asset-watcher",
+  "dep:tpt-kinetix-core",
+  "dep:tpt-kinetix-demux",
+  "dep:tpt-av-cadence-core",
+  "dep:tpt-av-cadence-wav",
+  "dep:tpt-av-cadence-flac",
+  "dep:tpt-av-cadence-ogg",
+  "dep:tpt-av-cadence-opus",
+  "dep:tpt-av-cadence-vorbis",
+  "tpt-app-media-asset-intelligence-model/tpt",
+]
+
 [dependencies]
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
@@ -14,3 +36,17 @@ sha2.workspace = true
 hex.workspace = true
 chrono.workspace = true
 uuid.workspace = true
+tpt-av-asset-utils = { workspace = true, optional = true }
+tpt-av-asset-db = { workspace = true, optional = true }
+tpt-av-asset-cache = { workspace = true, optional = true }
+tpt-av-asset-pipeline = { workspace = true, optional = true }
+tpt-av-asset-proxy = { workspace = true, optional = true }
+tpt-av-asset-watcher = { workspace = true, optional = true }
+tpt-kinetix-core = { workspace = true, optional = true }
+tpt-kinetix-demux = { workspace = true, optional = true }
+tpt-av-cadence-core = { workspace = true, optional = true }
+tpt-av-cadence-wav = { workspace = true, optional = true }
+tpt-av-cadence-flac = { workspace = true, optional = true }
+tpt-av-cadence-ogg = { workspace = true, optional = true }
+tpt-av-cadence-opus = { workspace = true, optional = true }
+tpt-av-cadence-vorbis = { workspace = true, optional = true }

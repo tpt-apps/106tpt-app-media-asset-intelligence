@@ -12,6 +12,15 @@ pub struct ScannedFile {
     pub fingerprint: String,
 }
 
+/// Fingerprint one file's bytes (best-effort: unreadable files yield
+/// an empty fingerprint; the scan error path reports them).
+pub fn scan_fingerprint(path: &Path) -> String {
+    match fs::read(path) {
+        Ok(bytes) => fingerprint_bytes(&bytes),
+        Err(_) => String::new(),
+    }
+}
+
 /// Strict path validation for watch-folder/NAS roots (spec §17).
 pub fn validate_root(root: &Path) -> Result<PathBuf, String> {
     if root.as_os_str().is_empty() {

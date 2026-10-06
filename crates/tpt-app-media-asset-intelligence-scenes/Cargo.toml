@@ -4,9 +4,20 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Frame-fed scene detection: RGBA frames via tpt-av-asset-cache::VideoSource.
+tpt = [
+  "dep:tpt-av-asset-cache",
+  "dep:tpt-av-visual-utils",
+  "tpt-app-media-asset-intelligence-model/tpt",
+]
+
 [dependencies]
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
 serde.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+tpt-av-asset-cache = { workspace = true, optional = true }
+tpt-av-visual-utils = { workspace = true, optional = true }

@@ -1,5 +1,8 @@
 //! Test helpers: synthetic archive manifests for golden/scale tests (spec §19).
 
+#[cfg(feature = "tpt")]
+pub mod fuzz;
+
 use std::collections::HashMap;
 
 /// Expected counts for a synthetic fixture archive.

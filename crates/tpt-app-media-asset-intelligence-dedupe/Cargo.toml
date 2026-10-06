@@ -4,9 +4,22 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Perceptual + audio-fingerprint dedupe via the real TPT stack.
+tpt = [
+  "dep:tpt-av-asset-cache",
+  "dep:tpt-av-cadence-core",
+  "dep:tpt-av-visual-utils",
+  "tpt-app-media-asset-intelligence-model/tpt",
+]
+
 [dependencies]
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
 serde.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+tpt-av-asset-cache = { workspace = true, optional = true }
+tpt-av-cadence-core = { workspace = true, optional = true }
+tpt-av-visual-utils = { workspace = true, optional = true }

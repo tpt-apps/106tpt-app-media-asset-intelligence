@@ -32,4 +32,25 @@ hex = "0.4"
 walkdir = "2"
 rusqlite = { version = "0.31", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4", "v5", "serde"] }
+proptest = "1"
+# TPT AV foundation crates, pinned by rev (ecosystem convention per
+# tpt-av-asset/Cargo.toml and tpt-visual/Cargo.toml).
+tpt-av-asset-utils = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-av-asset-db = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-av-asset-cache = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-av-asset-proxy = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-av-asset-watcher = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-av-asset-pipeline = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
+tpt-kinetix-core = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
+tpt-kinetix-demux = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
+tpt-kinetix-av1 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
+tpt-kinetix-vp9 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
+tpt-av-cadence-core = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-cadence-wav = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-cadence-flac = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-cadence-ogg = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-cadence-opus = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-cadence-vorbis = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
+tpt-av-visual-utils = { git = "https://github.com/tpt-solutions/tpt-visual", rev = "7f79eb975354dd9825eb26b912c457d3539e6fce" }
+tpt-av-visual = { git = "https://github.com/tpt-solutions/tpt-visual", rev = "7f79eb975354dd9825eb26b912c457d3539e6fce" }

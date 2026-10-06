@@ -1,4 +1,8 @@
-//! Exact-hash duplicate detection; perceptual/audio hooks for tpt-visual/tpt-cadence (spec §8).
+//! Exact-hash duplicate detection; perceptual/audio matching via the
+//! real TPT stack under `--features tpt` (spec §8).
+
+#[cfg(feature = "tpt")]
+pub mod perceptual;
 
 use std::collections::HashMap;
 use tpt_app_media_asset_intelligence_model::{AssetId, DuplicateGroup, MatchKind};

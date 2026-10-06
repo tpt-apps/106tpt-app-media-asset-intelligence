@@ -1,5 +1,7 @@
 //! Domain model (spec §6): Archive, Asset, Derivative, Tag, DuplicateGroup, Scene.
 
+pub mod tpt_convert;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

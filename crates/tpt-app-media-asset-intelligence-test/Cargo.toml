@@ -4,13 +4,32 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+tpt = [
+  "dep:tpt-av-asset-test-media",
+  "dep:tpt-av-test-reference",
+  "dep:tpt-av-test-fuzz",
+  "dep:tpt-kinetix-demux",
+  "tpt-app-media-asset-intelligence-ingest/tpt",
+  "tpt-app-media-asset-intelligence-model/tpt",
+  "tpt-app-media-asset-intelligence-dedupe/tpt",
+  "tpt-app-media-asset-intelligence-scenes/tpt",
+]
+
 [dependencies]
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
 tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intelligence-ingest" }
 tpt-app-media-asset-intelligence-dedupe = { path = "../tpt-app-media-asset-intelligence-dedupe" }
+tpt-app-media-asset-intelligence-scenes = { path = "../tpt-app-media-asset-intelligence-scenes" }
 tpt-app-media-asset-intelligence-search = { path = "../tpt-app-media-asset-intelligence-search" }
 uuid.workspace = true
+proptest.workspace = true
+tpt-av-asset-test-media = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d", optional = true }
+tpt-av-test-reference = { git = "https://github.com/tpt-solutions/tpt-av-test", rev = "4571941191129d70eab5a00c093fbd4928e262ae", optional = true }
+tpt-av-test-fuzz = { git = "https://github.com/tpt-solutions/tpt-av-test", rev = "4571941191129d70eab5a00c093fbd4928e262ae", optional = true }
+tpt-kinetix-demux = { workspace = true, optional = true }
 
 [[test]]
 name = "pipeline"
@@ -23,3 +42,8 @@ path = "../../tests/golden/counts.rs"
 [[test]]
 name = "scale_throughput"
 path = "../../tests/scale/throughput.rs"
+
+[[test]]
+name = "real_decode"
+path = "../../tests/integration/real_decode.rs"
+required-features = ["tpt"]
