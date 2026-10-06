@@ -18,19 +18,26 @@
 //!
 //! This crate builds directly on the `tpt-av-asset` foundation (spec §5.1): the
 //! [`foundation`] module maps each foundation capability to its product
-//! responsibility here. Phase 1 fills in the scanning, fingerprinting and
-//! metadata extraction stages; the foundation wiring is already proven by the
-//! build itself.
+//! responsibility here. Pass 1 is implemented: scanning ([`scanner`]),
+//! fingerprinting (in `-core`), technical metadata extraction ([`metadata`])
+//! and the in-memory [`ArchiveIndex`] the search layer
+//! reads.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 pub mod foundation;
+pub mod index;
+pub mod metadata;
 pub mod pipeline_stage;
 pub mod scan;
+pub mod scanner;
 
+pub use index::ArchiveIndex;
+pub use metadata::{build_asset, media_info_to_technical, probe, ProbeError, Probed};
 pub use pipeline_stage::{PipelinePass, PipelineStage};
 pub use scan::{ScanOutcome, ScannedFile};
+pub use scanner::{scan_roots, validate_root, ScanConfigError, ScanIssue, ScanRun, ScannedEntry};
 
 use std::path::Path;
 

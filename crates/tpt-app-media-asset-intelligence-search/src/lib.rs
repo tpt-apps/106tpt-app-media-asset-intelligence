@@ -30,8 +30,10 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod evaluate;
 pub mod query;
 
+pub use evaluate::{evaluate, evaluate_text, SearchDoc, SearchHit};
 pub use query::{parse_query, Query, QueryError, QueryTerm};
 
 /// The search layers of a result, for per-result match explanations (spec §10, §13.2).

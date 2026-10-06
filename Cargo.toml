@@ -65,9 +65,15 @@ tpt-av-visual-utils = { path = "../tpt-visual/tpt-av-visual-utils", version = "0
 # Third party
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 thiserror = "2.0"
 clap = { version = "4", features = ["derive"] }
 tracing = "0.1"
+
+# (dev) Synthetic media generation from the tpt-av-asset foundation (spec §5.2)
+# and temporary directories for engine integration tests.
+tpt-av-asset-test-media = { path = "../tpt-av-asset/test-support/tpt-av-asset-test-media", version = "0.1.0" }
+tempfile = "3"
 
 [profile.release]
 lto = "thin"

@@ -45,29 +45,29 @@ TPT Media Asset Intelligence — local-first media archive indexing, search, ded
 Goal: deliver the full MVP per §20 and Definition of Done per §25, following the recommended implementation order in §26.
 
 ### Domain Model
-- [ ] Implement `Archive` and `AiSettings` types, cloud fields defaulting to disabled/None — §6.1
-- [ ] Implement `Asset` type (fingerprint, size, technical metadata) — §6.2
-- [ ] Implement `Derivative`/`DerivativeKind` types (Thumbnail/Proxy/Waveform) — §6.3
-- [ ] Implement `Tag`/`TagSource` types (Manual/LocalModel/CloudModel) with confidence — §6.4
-- [ ] Implement `DuplicateGroup`/`MatchKind` types — §6.5
-- [ ] Implement `Scene` type — §6.6
-- [ ] Implement `SearchIndexEntry` type — §6.7
+- [x] Implement `Archive` and `AiSettings` types, cloud fields defaulting to disabled/None — §6.1 — * implemented in `-model/src/archive.rs` with default-state tests (§6.1) *
+- [x] Implement `Asset` type (fingerprint, size, technical metadata) — §6.2 — * implemented in `-model/src/asset.rs`; fingerprints hashed for real since this slice *
+- [x] Implement `Derivative`/`DerivativeKind` types (Thumbnail/Proxy/Waveform) — §6.3 — * implemented in `-model/src/derivative.rs` with `generated_with_version` *
+- [x] Implement `Tag`/`TagSource` types (Manual/LocalModel/CloudModel) with confidence — §6.4 — * implemented in `-model/src/tag.rs` with rejected-tag matching (§11) *
+- [x] Implement `DuplicateGroup`/`MatchKind` types — §6.5 — * implemented in `-model/src/duplicate.rs` with review status, keeper selection and similarity invariants *
+- [x] Implement `Scene` type — §6.6 — * implemented in `-model/src/scene.rs` *
+- [x] Implement `SearchIndexEntry` type — §6.7 — * implemented in `-model/src/search_entry.rs` *
 
 ### Ingestion & Technical Metadata
-- [ ] Integrate `tpt-av-asset` and build the archive/asset domain model on top of it — §26 steps 2–3
-- [ ] Implement filesystem/watch-folder scanning and recursive import of existing archive structures — §7, §26 step 4
-- [ ] Implement fingerprinting — §7
-- [ ] Implement technical metadata extraction (codec/container/resolution/duration/stream layout) via `tpt-kinetix`/`tpt-cadence`, deterministic per §3.2 — §7, §26 step 5
-- [ ] Implement incremental/resumable indexing so an interrupted scan does not reprocess unchanged assets — §18, §25
+- [x] Integrate `tpt-av-asset` and build the archive/asset domain model on top of it — §26 steps 2–3 — * foundation probe mapped onto the domain model in `-ingest/src/metadata.rs` (`probe` returns `Probed`, `build_asset` assembles `Asset`) *
+- [x] Implement filesystem/watch-folder scanning and recursive import of existing archive structures — §7, §26 step 4 — * deterministic recursive scanner with failure isolation and root validation in `-ingest/src/scanner.rs`; live watch-mode (tpt-av-asset-watcher) wiring lands with the indexing job queue *
+- [x] Implement fingerprinting — §7 — * streaming SHA-256 in `-core/src/fingerprint.rs` (constant memory per §18), known-vector tested *
+- [x] Implement technical metadata extraction (codec/container/resolution/duration/stream layout) via `tpt-kinetix`/`tpt-cadence`, deterministic per §3.2 — §7, §26 step 5 — * via the foundation's `probe_media_info` (kinetix video + cadence audio); interim: container derived from extension until the foundation surfaces it natively *
+- [x] Implement incremental/resumable indexing so an interrupted scan does not reprocess unchanged assets — §18, §25 — * scan classification (new/changed/unchanged) and rescan proof done in the engine; remaining: durable index state via persistence (§26 step 14) so resume survives process restarts *
 
 ### Pass 1 Search
-- [ ] Implement Pass 1 metadata/filename/path search, surfacing results within seconds of scan start — §7.1, §10 Layer 1, §26 step 6
+- [x] Implement Pass 1 metadata/filename/path search, surfacing results within seconds of scan start — §7.1, §10 Layer 1, §26 step 6 — * `SearchDoc` + query evaluation with per-result explanations in `-search/src/evaluate.rs`; proven end-to-end over real WAV/proxy-video fixtures in `-ingest/tests/engine.rs` *
 
 ### Derivative Generation
 - [ ] Implement thumbnail/proxy/waveform derivative generation via `tpt-av-asset`, running in the background without blocking the UI — §26 step 7
 
 ### Deduplication
-- [ ] Implement exact-hash duplicate detection — §8, §26 step 8
+- [x] Implement exact-hash duplicate detection — §8, §26 step 8 — * fingerprint grouping via `ArchiveIndex::assets_with_fingerprint` + `DuplicateGroup` formation and waste report, exercised in the engine integration test *
 - [ ] Implement perceptual near-duplicate detection via `tpt-visual` — §8, §26 step 9
 - [ ] Implement audio fingerprint duplicate matching (`tpt-cadence`/DSP-based) — §8
 - [ ] Implement reviewable duplicate groups UI/data model with keeper selection, reviewed/unreviewed status, and no automatic deletion or undo-safe review flow — §8

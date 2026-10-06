@@ -5,14 +5,22 @@
 //! detection: two assets with equal fingerprints are byte-identical regardless
 //! of filename or location (spec §8).
 //!
+//! Hashing is deterministic (spec §3.2) and streaming: files are read in fixed
+//! chunks, so fingerprinting a multi-gigabyte master costs constant memory.
+//!
 //! The hex form is the stable external representation (CLI output, JSON
 //! reports); comparisons use the raw 32-byte digest.
 
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fmt;
+use std::io::Read;
 
 /// Number of bytes in the SHA-256 digest.
 pub const FINGERPRINT_LEN: usize = 32;
+
+/// Streaming read chunk size for [`AssetFingerprint::from_reader`].
+const CHUNK_LEN: usize = 64 * 1024;
 
 /// A SHA-256 content fingerprint over an asset's bytes.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -22,6 +30,41 @@ impl AssetFingerprint {
     /// Creates a fingerprint from a raw 32-byte SHA-256 digest.
     pub const fn from_bytes(bytes: [u8; FINGERPRINT_LEN]) -> Self {
         Self(bytes)
+    }
+
+    /// Hashes an in-memory byte slice.
+    pub fn from_slice(bytes: &[u8]) -> Self {
+        Self(Sha256::digest(bytes).into())
+    }
+
+    /// Hashes a stream in fixed chunks, costing constant memory regardless of
+    /// file size (spec §18: archives in the multiple terabytes).
+    ///
+    /// # Errors
+    ///
+    /// Propagates I/O errors from the reader; the ingest pipeline surfaces
+    /// them as archive-health findings rather than crashing (spec §17).
+    pub fn from_reader(mut reader: impl Read) -> std::io::Result<Self> {
+        let mut hasher = Sha256::new();
+        let mut chunk = vec![0u8; CHUNK_LEN];
+        loop {
+            let read = reader.read(&mut chunk)?;
+            if read == 0 {
+                break;
+            }
+            hasher.update(&chunk[..read]);
+        }
+        Ok(Self(hasher.finalize().into()))
+    }
+
+    /// Hashes the file at `path`.
+    ///
+    /// # Errors
+    ///
+    /// Propagates I/O errors (missing file, permission denied, …).
+    pub fn from_file(path: &std::path::Path) -> std::io::Result<Self> {
+        let file = std::fs::File::open(path)?;
+        Self::from_reader(std::io::BufReader::new(file))
     }
 
     /// Returns the raw 32-byte digest.
@@ -104,6 +147,49 @@ mod tests {
             *b = (i * 7 + 3) as u8;
         }
         bytes
+    }
+
+    #[test]
+    fn empty_input_matches_the_sha256_empty_digest() {
+        // Well-known SHA-256 of the empty string.
+        let expected = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        assert_eq!(AssetFingerprint::from_slice(b"").to_hex(), expected);
+    }
+
+    #[test]
+    fn abc_vector_matches_the_sha256_test_vector() {
+        // Well-known SHA-256 of "abc".
+        let expected = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+        assert_eq!(AssetFingerprint::from_slice(b"abc").to_hex(), expected);
+    }
+
+    #[test]
+    fn streaming_hash_equals_single_shot_regardless_of_chunking() {
+        // 3×CHUNK_LEN + 17 forces partial chunks at both ends.
+        let payload: Vec<u8> = (0..3 * CHUNK_LEN + 17).map(|i| (i % 251) as u8).collect();
+        let single = AssetFingerprint::from_slice(&payload);
+        let streamed = AssetFingerprint::from_reader(std::io::Cursor::new(&payload)).unwrap();
+        assert_eq!(single, streamed);
+    }
+
+    #[test]
+    fn one_byte_difference_changes_the_fingerprint() {
+        let a = AssetFingerprint::from_slice(b"interview final");
+        let b = AssetFingerprint::from_slice(b"interview finam");
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn from_file_hashes_file_contents() {
+        let dir = std::env::temp_dir().join("tpt-mai-fingerprint-tests");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("payload.bin");
+        std::fs::write(&path, b"abc").unwrap();
+        assert_eq!(
+            AssetFingerprint::from_file(&path).unwrap(),
+            AssetFingerprint::from_slice(b"abc")
+        );
+        std::fs::remove_file(&path).ok();
     }
 
     #[test]

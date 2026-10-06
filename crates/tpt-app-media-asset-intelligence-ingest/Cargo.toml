@@ -31,3 +31,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
+tpt-app-media-asset-intelligence-dedupe = { workspace = true }
+tpt-app-media-asset-intelligence-search = { workspace = true }
+tpt-av-asset-test-media = { workspace = true }
+tempfile = { workspace = true }
