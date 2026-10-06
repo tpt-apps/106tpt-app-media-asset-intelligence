@@ -1,0 +1,18 @@
+[package]
+name = "tpt-app-media-asset-intelligence-test"
+description = "Test support for TPT Media Asset Intelligence: fixture archive paths, golden expectations and synthetic archive builders (spec §19)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "test-support", "fixtures", "golden-files"]
+categories = ["development-tools::testing"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+
+[dev-dependencies]

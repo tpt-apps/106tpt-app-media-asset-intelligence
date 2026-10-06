@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TPT Media Asset Intelligence</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #14171c;
+        color: #e6e9ee;
+        display: grid;
+        place-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      main {
+        text-align: center;
+        max-width: 40rem;
+        line-height: 1.6;
+      }
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      code {
+        background: #232830;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>TPT Media Asset Intelligence</h1>
+      <p>
+        Desktop shell placeholder (spec §13). The archive browser, search, asset
+        inspector, duplicate review, tagging review, health dashboard and indexing
+        queue land in Phase 1.
+      </p>
+      <p>
+        Engine version: <code id="engine-version">loading…</code>
+      </p>
+      <script>
+        window.__TAURI__.core
+          .invoke("engine_version")
+          .then((v) => (document.getElementById("engine-version").textContent = v))
+          .catch(() => (document.getElementById("engine-version").textContent = "unavailable"));
+      </script>
+    </main>
+  </body>
+</html>

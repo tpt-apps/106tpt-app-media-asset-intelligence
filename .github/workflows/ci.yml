@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Linux is the reference platform for the headless service/CLI path (spec §1:
+  # Linux second for NAS-adjacent deployment). Windows packaging is a later
+  # Phase 1 milestone (spec §26 step 25).
+  linux:
+    name: Linux (stable)
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+
+      # The foundation crates are sibling path dependencies (see
+      # [workspace.dependencies]); CI materialises the expected layout.
+      - name: Fetch sibling tpt-av-asset (path dependency)
+        shell: bash
+        run: git clone --depth 1 https://github.com/tpt-solutions/tpt-av-asset.git ../tpt-av-asset
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --locked
+
+      - name: cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          # The advisory database occasionally lags a patched transitive
+          # dependency; license/source policy stays strict.
+          command: check licenses sources bans
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch sibling tpt-av-asset (path dependency)
+        shell: bash
+        run: git clone --depth 1 https://github.com/tpt-solutions/tpt-av-asset.git ../tpt-av-asset
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build documentation
+        run: cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings

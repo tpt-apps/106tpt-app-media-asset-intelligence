@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/tpt-app-media-asset-intelligence-core",
+    "crates/tpt-app-media-asset-intelligence-model",
+    "crates/tpt-app-media-asset-intelligence-ingest",
+    "crates/tpt-app-media-asset-intelligence-dedupe",
+    "crates/tpt-app-media-asset-intelligence-scenes",
+    "crates/tpt-app-media-asset-intelligence-tagging",
+    "crates/tpt-app-media-asset-intelligence-search",
+    "crates/tpt-app-media-asset-intelligence-health",
+    "crates/tpt-app-media-asset-intelligence-cli",
+    "crates/tpt-app-media-asset-intelligence-service",
+    "crates/tpt-app-media-asset-intelligence-test",
+]
+
+# The Tauri desktop shell is not part of the default workspace build: it drags in the
+# Tauri/WebView2 stack, which must not be a prerequisite for working on the engine
+# (spec §3.6 — engine and presentation are separate). Build it with
+# `cargo build --manifest-path crates/tpt-app-media-asset-intelligence-tauri/Cargo.toml`
+# once the desktop shell work (spec §13) begins.
+exclude = [
+    "crates/tpt-app-media-asset-intelligence-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://github.com/tpt-apps/106tpt-app-media-asset-intelligence"
+homepage = "https://opensource.tptsolutions.co.nz/"
+readme = "README.md"
+
+[workspace.dependencies]
+# Internal crates
+tpt-app-media-asset-intelligence-core = { path = "crates/tpt-app-media-asset-intelligence-core", version = "0.1.0" }
+tpt-app-media-asset-intelligence-model = { path = "crates/tpt-app-media-asset-intelligence-model", version = "0.1.0" }
+tpt-app-media-asset-intelligence-ingest = { path = "crates/tpt-app-media-asset-intelligence-ingest", version = "0.1.0" }
+tpt-app-media-asset-intelligence-dedupe = { path = "crates/tpt-app-media-asset-intelligence-dedupe", version = "0.1.0" }
+tpt-app-media-asset-intelligence-scenes = { path = "crates/tpt-app-media-asset-intelligence-scenes", version = "0.1.0" }
+tpt-app-media-asset-intelligence-tagging = { path = "crates/tpt-app-media-asset-intelligence-tagging", version = "0.1.0" }
+tpt-app-media-asset-intelligence-search = { path = "crates/tpt-app-media-asset-intelligence-search", version = "0.1.0" }
+tpt-app-media-asset-intelligence-health = { path = "crates/tpt-app-media-asset-intelligence-health", version = "0.1.0" }
+tpt-app-media-asset-intelligence-cli = { path = "crates/tpt-app-media-asset-intelligence-cli", version = "0.1.0" }
+tpt-app-media-asset-intelligence-service = { path = "crates/tpt-app-media-asset-intelligence-service", version = "0.1.0" }
+tpt-app-media-asset-intelligence-test = { path = "crates/tpt-app-media-asset-intelligence-test", version = "0.1.0" }
+
+# Open TPT AV foundation crates (open source, separate repositories, spec §5).
+# Path dependencies for local development; `version` is supplied so the crates can
+# also be consumed from a registry or pinned git revisions without edits. The
+# foundation workspaces themselves pin `tpt-kinetix` and `tpt-cadence` by git rev
+# (the pattern established in tpt-av-asset/Cargo.toml and tpt-visual/Cargo.toml).
+tpt-av-asset-utils = { path = "../tpt-av-asset/tpt-av-asset-utils", version = "0.1.0" }
+tpt-av-asset-db = { path = "../tpt-av-asset/tpt-av-asset-db", version = "0.1.0" }
+tpt-av-asset-cache = { path = "../tpt-av-asset/tpt-av-asset-cache", version = "0.1.0" }
+tpt-av-asset-proxy = { path = "../tpt-av-asset/tpt-av-asset-proxy", version = "0.1.0" }
+tpt-av-asset-watcher = { path = "../tpt-av-asset/tpt-av-asset-watcher", version = "0.1.0" }
+tpt-av-asset-pipeline = { path = "../tpt-av-asset/tpt-av-asset-pipeline", version = "0.1.0" }
+# tpt-visual foundation frame/pixel/time primitives (spec §5.2). The GPU
+# compositor stack is deliberately not consumed.
+tpt-av-visual-utils = { path = "../tpt-visual/tpt-av-visual-utils", version = "0.1.0" }
+
+# Third party
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

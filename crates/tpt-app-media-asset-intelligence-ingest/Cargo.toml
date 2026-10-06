@@ -1,0 +1,33 @@
+[package]
+name = "tpt-app-media-asset-intelligence-ingest"
+description = "Ingestion pipeline for TPT Media Asset Intelligence: filesystem/watch-folder scanning, fingerprinting and technical metadata extraction on the tpt-av-asset foundation (spec §7)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "ingest", "fingerprinting", "metadata", "watch-folders"]
+categories = ["multimedia", "filesystem"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+# tpt-av-asset foundation (spec §5.1): persistent asset metadata, thumbnail/waveform
+# caches, proxy generation, embedded database, watch folders, background jobs,
+# resumable processing and cache invalidation. This product builds on these rather
+# than duplicating them (spec §5).
+tpt-av-asset-utils = { workspace = true }
+tpt-av-asset-db = { workspace = true }
+tpt-av-asset-cache = { workspace = true }
+tpt-av-asset-proxy = { workspace = true }
+tpt-av-asset-watcher = { workspace = true }
+tpt-av-asset-pipeline = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

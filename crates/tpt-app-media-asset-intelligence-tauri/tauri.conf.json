@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TPT Media Asset Intelligence",
+  "version": "0.1.0",
+  "identifier": "co.nz.tptsolutions.media-asset-intelligence",
+  "build": {
+    "frontendDist": "./ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "TPT Media Asset Intelligence",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "icon": ["icons/icon.ico"],
+    "windows": {
+      "webviewInstallMode": { "type": "offlineInstaller" }
+    },
+    "category": "Developer Tool",
+    "shortDescription": "Local-first media archive intelligence",
+    "longDescription": "TPT Media Asset Intelligence — index, deduplicate, understand and search your entire media archive, entirely on your own hardware. Local-first: the index and derivatives live on your storage, never a vendor cloud."
+  }
+}

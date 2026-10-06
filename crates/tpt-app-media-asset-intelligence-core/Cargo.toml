@@ -1,0 +1,20 @@
+[package]
+name = "tpt-app-media-asset-intelligence-core"
+description = "Shared primitives for TPT Media Asset Intelligence: identifiers, media types, content fingerprints and the engine version."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "asset-management", "fingerprint", "local-first", "identifier"]
+categories = ["data-structures", "multimedia"]
+readme = "README.md"
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -1,0 +1,22 @@
+[package]
+name = "tpt-app-media-asset-intelligence-dedupe"
+description = "Duplicate and near-duplicate detection for TPT Media Asset Intelligence: layered detection producing reviewable groups, never automatic deletion (spec §8)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "dedupe", "perceptual-hash", "local-first"]
+categories = ["multimedia", "algorithms"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

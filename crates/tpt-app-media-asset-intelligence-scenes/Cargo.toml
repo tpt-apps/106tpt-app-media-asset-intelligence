@@ -1,0 +1,26 @@
+[package]
+name = "tpt-app-media-asset-intelligence-scenes"
+description = "Deterministic scene-change detection for TPT Media Asset Intelligence: technical frame-difference/perceptual-hash segmentation via tpt-visual (spec §9)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "scene-detection", "perceptual-hash", "deterministic"]
+categories = ["multimedia"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+# tpt-visual foundation (spec §5.2): frame abstraction used by scene-change and
+# perceptual duplicate detection. The heavy GPU compositor is NOT consumed; the
+# detection work in Phase 1 builds on the frame/pixel/time primitives here.
+tpt-av-visual-utils = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
