@@ -1,5 +1,6 @@
 [package]
 name = "tpt-app-media-asset-intelligence-service"
+<<<<<<< HEAD
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -16,3 +17,26 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+=======
+description = "Headless service host for TPT Media Asset Intelligence: background indexing jobs and the optional localhost-only API (spec §15)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "service", "background-jobs", "localhost-api"]
+categories = ["multimedia"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d

@@ -1,5 +1,8 @@
 /target
-Cargo.lock
+# The excluded tauri crate has its own build tree.
+crates/tpt-app-media-asset-intelligence-tauri/target
+# Cargo.lock IS committed: this is an application workspace, and CI runs
+# `cargo test --locked` for reproducible builds.
 **/*.rs.bk
 *.pdb
 

@@ -1,14 +1,29 @@
 [package]
 name = "tpt-app-media-asset-intelligence-cli"
+<<<<<<< HEAD
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+=======
+description = "Batch interface for TPT Media Asset Intelligence: index, search, dedupe and tag commands sharing the GUI's engine, with a stable exit-code contract (spec §14)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "cli", "batch", "automation"]
+categories = ["command-line-utilities", "multimedia"]
+readme = "README.md"
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
 
 [[bin]]
 name = "tpt-media-asset-intel"
 path = "src/main.rs"
 
 [dependencies]
+<<<<<<< HEAD
 tpt-app-media-asset-intelligence-core = { path = "../tpt-app-media-asset-intelligence-core" }
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
 tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intelligence-ingest" }
@@ -24,3 +39,15 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+=======
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d

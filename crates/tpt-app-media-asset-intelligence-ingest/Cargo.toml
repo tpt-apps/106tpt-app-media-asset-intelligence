@@ -1,5 +1,6 @@
 [package]
 name = "tpt-app-media-asset-intelligence-ingest"
+<<<<<<< HEAD
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -50,3 +51,40 @@ tpt-av-cadence-flac = { workspace = true, optional = true }
 tpt-av-cadence-ogg = { workspace = true, optional = true }
 tpt-av-cadence-opus = { workspace = true, optional = true }
 tpt-av-cadence-vorbis = { workspace = true, optional = true }
+=======
+description = "Ingestion pipeline for TPT Media Asset Intelligence: filesystem/watch-folder scanning, fingerprinting and technical metadata extraction on the tpt-av-asset foundation (spec §7)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "ingest", "fingerprinting", "metadata", "watch-folders"]
+categories = ["multimedia", "filesystem"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+# tpt-av-asset foundation (spec §5.1): persistent asset metadata, thumbnail/waveform
+# caches, proxy generation, embedded database, watch folders, background jobs,
+# resumable processing and cache invalidation. This product builds on these rather
+# than duplicating them (spec §5).
+tpt-av-asset-utils = { workspace = true }
+tpt-av-asset-db = { workspace = true }
+tpt-av-asset-cache = { workspace = true }
+tpt-av-asset-proxy = { workspace = true }
+tpt-av-asset-watcher = { workspace = true }
+tpt-av-asset-pipeline = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tpt-app-media-asset-intelligence-dedupe = { workspace = true }
+tpt-app-media-asset-intelligence-search = { workspace = true }
+tpt-av-asset-test-media = { workspace = true }
+tempfile = { workspace = true }
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d

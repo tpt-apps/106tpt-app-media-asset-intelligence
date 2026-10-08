@@ -6,6 +6,7 @@ TPT Media Asset Intelligence — local-first media archive indexing, search, ded
 
 ## Phase 0: Repository, Licensing & Foundation Verification (§4, §5, §16, §17)
 
+<<<<<<< HEAD
 - [x] Confirm `tpt-av-asset` (primary dependency, §5.1) is reachable from this workspace (path or git dependency) and enumerate its existing asset/derivative/job/cache capabilities to avoid duplicating them — resolved: rev-pinned at `github.com/tpt-solutions/tpt-av-asset` `bb257b3` (== master HEAD); capabilities enumerated in `docs/INTEGRATION_RISKS.md`
 - [x] Confirm `tpt-kinetix` (§5.2) resolves as a pinned git dependency (`github.com/tpt-solutions/tpt-kinetix`, per the rev-pinning pattern already used in `tpt-av-asset/Cargo.toml` and `tpt-visual/Cargo.toml`) — resolved: bumped 2026-10-07 to master `b904ff3` (old pin `dab6415` predated master); `-ingest`/`-model --features tpt` build and all `-test --features tpt` fuzz/reference tests green against the new rev
 - [x] Confirm `tpt-cadence` (§5.2, audio decode/waveform/technical metadata) is reachable from this workspace — resolved: rev-pinned `95ff6bf` at `github.com/tpt-solutions/tpt-cadence` (== master HEAD)
@@ -29,14 +30,46 @@ TPT Media Asset Intelligence — local-first media archive indexing, search, ded
 - [x] Scaffold `tpt-app-media-asset-intelligence-service` crate
 - [x] Scaffold `tpt-app-media-asset-intelligence-tauri` crate
 - [x] Scaffold `tpt-app-media-asset-intelligence-test` crate
+=======
+- [x] Confirm `tpt-av-asset` (primary dependency, §5.1) is reachable from this workspace (path or git dependency) and enumerate its existing asset/derivative/job/cache capabilities to avoid duplicating them — *consumed as a sibling path dep; capability map + compile-time reachability test in `crates/tpt-app-media-asset-intelligence-ingest/src/foundation.rs`*
+- [x] Confirm `tpt-kinetix` (§5.2) resolves as a pinned git dependency (`github.com/tpt-solutions/tpt-kinetix`, per the rev-pinning pattern already used in `tpt-av-asset/Cargo.toml` and `tpt-visual/Cargo.toml`) — flag as an integration risk until proven resolvable from a fresh workspace — *resolved: our fresh workspace fetched and built the pinned revs (`9747a2b`) transitively through `tpt-av-asset`'s pins*
+- [x] Confirm `tpt-cadence` (§5.2, audio decode/waveform/technical metadata) is reachable from this workspace — flag as an integration risk (unresolved for sibling `tpt-app-voice-studio` at time of writing per its `todo.md`; re-check current status before wiring real `Cargo.toml` paths) — *resolved via `tpt-av-asset`'s git-rev pins (`72794ef`); built in this workspace*
+- [x] Confirm `tpt-visual` (§5.2, scene-change/perceptual-duplicate/visual-similarity) is reachable from this workspace — *`tpt-av-visual-utils` (frame/pixel/time primitives) wired into `-scenes` with a reachability test; the GPU compositor stack is deliberately not consumed*
+- [ ] Confirm `tpt-voice` (§5.2, optional transcription/diarisation) is reachable from this workspace — flag as an integration risk since it is the most optional/least-proven integration and is explicitly out of MVP scope (§20) — **Status: NOT reachable.** No local repo exists and none was found on this machine; out of MVP scope (§20), so this only blocks the Phase 2 integration (§21)
+- [ ] Confirm `tpt-av-test` (§5.2, golden fixtures/fuzzing harnesses) is reachable from this workspace for reuse — *repo present locally and public on GitHub; remaining: wire as a dev-dependency when the fuzz/golden work lands (§19.5, §26 steps 20–23)*
+- [x] Initialize git repository, add `.gitignore` (Rust/Cargo template) — *repository already initialized; `.gitignore` covers target/, editor dirs and runtime derivative caches*
+- [x] Create `LICENSE-MIT` and `LICENSE-APACHE` (dual license, copyright holder TPT Solutions)
+- [x] Set `license = "MIT OR Apache-2.0"` in workspace `Cargo.toml`
+- [x] Create `deny.toml` (cargo-deny license/advisory enforcement) — *permissive-only allow list; C/copyleft media stacks banned; TPT git sources allowed; validated with cargo-deny locally and in CI*
+- [x] Create Cargo workspace `Cargo.toml` (members per §4: `-core`, `-model`, `-ingest`, `-dedupe`, `-scenes`, `-tagging`, `-search`, `-health`, `-cli`, `-service`, `-tauri`, `-test`) — *11 workspace members; `-tauri` excluded (Tauri/WebView2 must not be an engine prerequisite), mirroring `tpt-app-av-automation`*
+- [x] Scaffold `tpt-app-media-asset-intelligence-core` crate — *ids, media types, SHA-256 fingerprint, ENGINE_VERSION (§6)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-model` crate (domain model per §6) — *full §6 domain model implemented with serde + invariant tests (cloud fields default disabled, exact-hash similarity 1.0, rejected-tag matching)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-ingest` crate — *foundation wiring + capability map, pipeline-stage/two-pass model (§7.1), scan outcome classification (§18)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-dedupe` crate — *detection layers + JSON report with shared reclaimable-waste arithmetic (§8, §12)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-scenes` crate — *deterministic detector config (part of the §3.2 contract) + tpt-visual wiring*
+- [x] Scaffold `tpt-app-media-asset-intelligence-tagging` crate — *rejected-tag memory with flagged-reproposal semantics (§11)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-search` crate — *shared query language: AST, parser with positioned errors, display round-trip (§14); designated §19.5 fuzz target*
+- [x] Scaffold `tpt-app-media-asset-intelligence-health` crate — *health issue kinds + snapshots (§12)*
+- [x] Scaffold `tpt-app-media-asset-intelligence-cli` crate — *clap definitions, stable exit-code contract 0–6 (§14), `cloud_ai_used` envelopes, cloud tagging behind `--cloud --cloud-confirmed`*
+- [x] Scaffold `tpt-app-media-asset-intelligence-service` crate — *§15 local API invariants encoded: loopback-only bind, disabled by default*
+- [x] Scaffold `tpt-app-media-asset-intelligence-tauri` crate — *buildable shell (manifest, conf, capabilities, placeholder UI, engine-version command); excluded from workspace/CI*
+- [x] Scaffold `tpt-app-media-asset-intelligence-test` crate — *fixture discovery for the five §19.2 archives*
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
 - [x] Create `README.md` (product overview, positioning, quickstart)
 - [x] Create `CONTRIBUTING.md`
 - [x] Create `CHANGELOG.md`
 - [x] Create `docs/` skeleton: `architecture.md`, `index-model.md`, `search-model.md`, `tagging-model.md`, `ai-disclosure.md`, `archive-health.md`
+<<<<<<< HEAD
 - [x] Set up CI (GitHub Actions): build, test, clippy, fmt check
 - [x] Add `cargo-deny check` to CI
 - [x] Scaffold `fixtures/` directories: `synthetic-archive-small/`, `synthetic-archive-large/`, `duplicates/`, `corrupt/`, `mixed-formats/` — §19.2
 - [x] Scaffold `tests/` directories: `integration/`, `golden/`, `scale/`
+=======
+- [x] Set up CI (GitHub Actions): build, test, clippy, fmt check — `.github/workflows/ci.yml` (Linux reference platform; clones sibling `tpt-av-asset` into the path-dep layout)
+- [x] Add `cargo-deny check` to CI
+- [x] Scaffold `fixtures/` directories: `synthetic-archive-small/`, `synthetic-archive-large/`, `duplicates/`, `corrupt/`, `mixed-formats/` — §19.2 — *directories + purpose READMEs; synthetic media and documented expectations are generated with the golden suite in Phase 1 (§26 step 20)*
+- [x] Scaffold `tests/` directories: `integration/`, `golden/`, `scale/` — *with READMEs; populated in Phase 1 (§26 steps 20–23)*
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
 
 ---
 
@@ -54,6 +87,7 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 - [ ] Confirm `tpt-kinetix`/`tpt-cadence`/`tpt-av-asset` decode the allowlisted codecs without pulling in H.264/AAC (or other patent-encumbered) decoders; verify via `cargo-deny`/dependency review — RISK OPEN (deps unreachable; see `docs/INTEGRATION_RISKS.md`)
 
 ### Domain Model
+<<<<<<< HEAD
 - [x] Implement `Archive` and `AiSettings` types, cloud fields defaulting to disabled/None — §6.1
 - [x] Implement `Asset` type (fingerprint, size, technical metadata) — §6.2
 - [x] Implement `Derivative`/`DerivativeKind` types (Thumbnail/Proxy/Waveform) — §6.3
@@ -71,15 +105,41 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 
 ### Pass 1 Search
 - [x] Implement Pass 1 metadata/filename/path search, surfacing results within seconds of scan start — §7.1, §10 Layer 1, §26 step 6
+=======
+- [x] Implement `Archive` and `AiSettings` types, cloud fields defaulting to disabled/None — §6.1 — * implemented in `-model/src/archive.rs` with default-state tests (§6.1) *
+- [x] Implement `Asset` type (fingerprint, size, technical metadata) — §6.2 — * implemented in `-model/src/asset.rs`; fingerprints hashed for real since this slice *
+- [x] Implement `Derivative`/`DerivativeKind` types (Thumbnail/Proxy/Waveform) — §6.3 — * implemented in `-model/src/derivative.rs` with `generated_with_version` *
+- [x] Implement `Tag`/`TagSource` types (Manual/LocalModel/CloudModel) with confidence — §6.4 — * implemented in `-model/src/tag.rs` with rejected-tag matching (§11) *
+- [x] Implement `DuplicateGroup`/`MatchKind` types — §6.5 — * implemented in `-model/src/duplicate.rs` with review status, keeper selection and similarity invariants *
+- [x] Implement `Scene` type — §6.6 — * implemented in `-model/src/scene.rs` *
+- [x] Implement `SearchIndexEntry` type — §6.7 — * implemented in `-model/src/search_entry.rs` *
+
+### Ingestion & Technical Metadata
+- [x] Integrate `tpt-av-asset` and build the archive/asset domain model on top of it — §26 steps 2–3 — * foundation probe mapped onto the domain model in `-ingest/src/metadata.rs` (`probe` returns `Probed`, `build_asset` assembles `Asset`) *
+- [x] Implement filesystem/watch-folder scanning and recursive import of existing archive structures — §7, §26 step 4 — * deterministic recursive scanner with failure isolation and root validation in `-ingest/src/scanner.rs`; live watch-mode (tpt-av-asset-watcher) wiring lands with the indexing job queue *
+- [x] Implement fingerprinting — §7 — * streaming SHA-256 in `-core/src/fingerprint.rs` (constant memory per §18), known-vector tested *
+- [x] Implement technical metadata extraction (codec/container/resolution/duration/stream layout) via `tpt-kinetix`/`tpt-cadence`, deterministic per §3.2 — §7, §26 step 5 — * via the foundation's `probe_media_info` (kinetix video + cadence audio); interim: container derived from extension until the foundation surfaces it natively *
+- [x] Implement incremental/resumable indexing so an interrupted scan does not reprocess unchanged assets — §18, §25 — * scan classification (new/changed/unchanged) and rescan proof done in the engine; remaining: durable index state via persistence (§26 step 14) so resume survives process restarts *
+
+### Pass 1 Search
+- [x] Implement Pass 1 metadata/filename/path search, surfacing results within seconds of scan start — §7.1, §10 Layer 1, §26 step 6 — * `SearchDoc` + query evaluation with per-result explanations in `-search/src/evaluate.rs`; proven end-to-end over real WAV/proxy-video fixtures in `-ingest/tests/engine.rs` *
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
 
 ### Derivative Generation
 - [ ] Implement thumbnail/proxy/waveform derivative generation via `tpt-av-asset`, running in the background without blocking the UI — §26 step 7 — RISK OPEN (dep unreachable; `Derivative` model + storage-separation rule in place)
 
 ### Deduplication
+<<<<<<< HEAD
 - [x] Implement exact-hash duplicate detection — §8, §26 step 8
 - [ ] Implement perceptual near-duplicate detection via `tpt-visual` — §8, §26 step 9 — RISK OPEN (dep unreachable; `MatchKind::Perceptual` seam in place)
 - [ ] Implement audio fingerprint duplicate matching (`tpt-cadence`/DSP-based) — §8 — RISK OPEN (dep unreachable; `MatchKind::AudioFingerprint` seam in place)
 - [x] Implement reviewable duplicate groups UI/data model with keeper selection, reviewed/unreviewed status, and no automatic deletion or undo-safe review flow — §8
+=======
+- [x] Implement exact-hash duplicate detection — §8, §26 step 8 — * fingerprint grouping via `ArchiveIndex::assets_with_fingerprint` + `DuplicateGroup` formation and waste report, exercised in the engine integration test *
+- [ ] Implement perceptual near-duplicate detection via `tpt-visual` — §8, §26 step 9
+- [ ] Implement audio fingerprint duplicate matching (`tpt-cadence`/DSP-based) — §8
+- [ ] Implement reviewable duplicate groups UI/data model with keeper selection, reviewed/unreviewed status, and no automatic deletion or undo-safe review flow — §8
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
 
 ### Scene Detection
 - [x] Implement deterministic frame-difference/perceptual-hash scene-change detection via `tpt-visual` — §9, §26 step 10 (deterministic splitter contract in `-scenes`; frame scoring plugs in when `tpt-visual` resolves)

@@ -1,5 +1,6 @@
 [package]
 name = "tpt-app-media-asset-intelligence-search"
+<<<<<<< HEAD
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,3 +12,22 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+=======
+description = "Layered search engine for TPT Media Asset Intelligence: deterministic metadata search, full-text over tags/notes and optional semantic search (spec §10)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords = ["media-archive", "search", "full-text", "local-first", "query-language"]
+categories = ["multimedia", "text-processing"]
+readme = "README.md"
+
+[dependencies]
+tpt-app-media-asset-intelligence-core = { workspace = true }
+tpt-app-media-asset-intelligence-model = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d

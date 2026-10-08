@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [advisories]
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
@@ -14,3 +15,54 @@ wildcards = "deny"
 [sources]
 unknown-registry = "deny"
 unknown-git = "warn"
+=======
+# cargo-deny configuration for tpt-app-media-asset-intelligence.
+#
+# Policy (spec §17): the index must work fully offline and this workspace must not
+# introduce copyleft or C-native media dependencies that the TPT AV foundation
+# explicitly avoids. The allow list IS the policy — anything not listed here
+# (GPL, LGPL, AGPL, MPL, ...) is denied, as are the specific banned crates.
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "CC0-1.0",
+    # unicode-ident (a transitive dependency of unicode tooling) ships the
+    # Unicode data files under this license. Data license, not copyleft.
+    "Unicode-3.0",
+]
+
+[bans]
+multiple-versions = "warn"
+deny = [
+    # C-based / copyleft media stacks are explicitly banned: the deterministic
+    # decode stack comes from the pure-Rust TPT foundation (spec §5, §17).
+    { name = "sqlite3-sys" },
+    { name = "libsqlite3-sys" },
+    { name = "ffmpeg-sys" },
+    { name = "ffmpeg-sys-next" },
+    { name = "ffmpeg-next" },
+]
+
+[advisories]
+version = 2
+yanked = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# The sibling TPT ecosystem crates come from our own GitHub org until they are
+# published to crates.io (all MIT OR Apache-2.0). The tpt-av-asset workspace we
+# consume by path pins tpt-kinetix and tpt-cadence from these URLs.
+allow-git = [
+    "https://github.com/tpt-solutions/tpt-cadence",
+    "https://github.com/tpt-solutions/tpt-kinetix",
+    "https://github.com/tpt-solutions/tpt-av-test",
+]
+>>>>>>> f59474f40b216520196c8150f8405ef66c08859d
