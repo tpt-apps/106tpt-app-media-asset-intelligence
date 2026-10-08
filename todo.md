@@ -6,12 +6,12 @@ TPT Media Asset Intelligence — local-first media archive indexing, search, ded
 
 ## Phase 0: Repository, Licensing & Foundation Verification (§4, §5, §16, §17)
 
-- [ ] Confirm `tpt-av-asset` (primary dependency, §5.1) is reachable from this workspace (path or git dependency) and enumerate its existing asset/derivative/job/cache capabilities to avoid duplicating them — RISK OPEN (no local checkout / crates.io entry found at scaffold; see `docs/INTEGRATION_RISKS.md`)
-- [ ] Confirm `tpt-kinetix` (§5.2) resolves as a pinned git dependency (`github.com/tpt-solutions/tpt-kinetix`, per the rev-pinning pattern already used in `tpt-av-asset/Cargo.toml` and `tpt-visual/Cargo.toml`) — RISK OPEN (unresolvable from fresh workspace at scaffold; see `docs/INTEGRATION_RISKS.md`)
-- [ ] Confirm `tpt-cadence` (§5.2, audio decode/waveform/technical metadata) is reachable from this workspace — RISK OPEN (unresolved for sibling `tpt-app-voice-studio` at time of writing per its `todo.md`; re-check current status before wiring real `Cargo.toml` paths)
-- [ ] Confirm `tpt-visual` (§5.2, scene-change/perceptual-duplicate/visual-similarity) is reachable from this workspace — RISK OPEN (see `docs/INTEGRATION_RISKS.md`)
-- [ ] Confirm `tpt-voice` (§5.2, optional transcription/diarisation) is reachable from this workspace — RISK OPEN (most optional/least-proven, explicitly out of MVP scope §20)
-- [ ] Confirm `tpt-av-test` (§5.2, golden fixtures/fuzzing harnesses) is reachable from this workspace for reuse — RISK OPEN (local `-test` helpers stand in; see `docs/INTEGRATION_RISKS.md`)
+- [x] Confirm `tpt-av-asset` (primary dependency, §5.1) is reachable from this workspace (path or git dependency) and enumerate its existing asset/derivative/job/cache capabilities to avoid duplicating them — resolved: rev-pinned at `github.com/tpt-solutions/tpt-av-asset` `bb257b3` (== master HEAD); capabilities enumerated in `docs/INTEGRATION_RISKS.md`
+- [x] Confirm `tpt-kinetix` (§5.2) resolves as a pinned git dependency (`github.com/tpt-solutions/tpt-kinetix`, per the rev-pinning pattern already used in `tpt-av-asset/Cargo.toml` and `tpt-visual/Cargo.toml`) — resolved: bumped 2026-10-07 to master `b904ff3` (old pin `dab6415` predated master); `-ingest`/`-model --features tpt` build and all `-test --features tpt` fuzz/reference tests green against the new rev
+- [x] Confirm `tpt-cadence` (§5.2, audio decode/waveform/technical metadata) is reachable from this workspace — resolved: rev-pinned `95ff6bf` at `github.com/tpt-solutions/tpt-cadence` (== master HEAD)
+- [x] Confirm `tpt-visual` (§5.2, scene-change/perceptual-duplicate/visual-similarity) is reachable from this workspace — resolved: rev-pinned `7f79eb9` at `github.com/tpt-solutions/tpt-visual` (== master HEAD)
+- [x] Confirm `tpt-voice` (§5.2, optional transcription/diarisation) is reachable from this workspace — resolved: repo live at `github.com/tpt-solutions/tpt-voice`, master `05ffff3`; not wired, explicitly out of MVP scope §20
+- [x] Confirm `tpt-av-test` (§5.2, golden fixtures/fuzzing harnesses) is reachable from this workspace for reuse — resolved: `tpt-av-test-fuzz` corpus/macros and `tpt-av-test-reference` resolve at `4571941` and build green (`-test --features tpt`)
 - [x] Initialize git repository, add `.gitignore` (Rust/Cargo template)
 - [x] Create `LICENSE-MIT` and `LICENSE-APACHE` (dual license, copyright holder TPT Solutions)
 - [x] Set `license = "MIT OR Apache-2.0"` in workspace `Cargo.toml`
@@ -100,22 +100,23 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 - [x] Implement storage growth / duplicate-waste trend summary — §12, §26 step 13 (`HealthSnapshot.duplicate_waste_bytes` + counts; trend history lands with SQLite persistence)
 
 ### Persistence
-- [ ] Implement SQLite persistence for archives/roots/settings, assets (paths+fingerprints, not raw media), derivatives (paths only), tags, duplicate groups, archive-health snapshots, and user/AI-enablement preferences — §16, §26 step 14 — OPEN (rusqlite staged in workspace deps; schema + store next)
+- [x] Implement SQLite persistence for archives/roots/settings, assets (paths+fingerprints, not raw media), derivatives (paths only), tags, duplicate groups, archive-health snapshots, and user/AI-enablement preferences — §16, §26 step 14 (`persistence` crate: DDL v1, full store API, job records; on-disk durability covered by `persistence_durability` integration tests)
 - [x] Ensure cached derivatives are stored separately from the database and from the original archive — §16 (enforced by model: derivatives carry paths only; `.gitignore` excludes runtime caches)
 
 ### Job Queue & Resumability
-- [ ] Implement the indexing job queue (active/queued indexing, derivative-generation, tagging jobs) with pause/resume/cancel — §13.7, §26 step 15
-- [ ] Ensure concurrency uses available CPU cores for parallel metadata extraction/derivative generation while search stays responsive during background scans — §18
+- [x] Implement the indexing job queue (active/queued indexing, derivative-generation, tagging jobs) with pause/resume/cancel — §13.7, §26 step 15 (`-queue` executor over the SQLite store: persisted transitions, crash recovery requeues interrupted `Active` jobs, built-in index scanner worker writes assets + health snapshot; derivative/tagging workers skip with a note until their deps land)
+- [x] Ensure concurrency uses available CPU cores for parallel metadata extraction/derivative generation while search stays responsive during background scans — §18 (worker pool bounded by `available_parallelism()`, capped at 8; search runs on the foreground thread)
 
 ### CLI
-- [x] Implement CLI `index` command (`--archive`, `--roots`) using the same engine as the GUI — §14, §26 step 16
-- [x] Implement CLI `search` command with query syntax (e.g. `codec:av1 AND tag:interview`) — §14
-- [x] Implement CLI `dedupe` command with JSON report output — §14
+- [x] Implement CLI `index` command (`--archive`, `--roots`) using the same engine as the GUI — §14, §26 step 16 (`--data-dir`/`TMAI_DATA_DIR`/platform app-data default; durable SQLite archive via the job queue: assets + per-run health snapshots persisted, exact-duplicate groups reconciled; `archive_id` in the report)
+- [x] Implement CLI `search` command with query syntax (e.g. `codec:av1 AND tag:interview`) — §14 (runs `parse_query` + match/explain over the persisted archive, printing matching paths with reasons)
+- [x] Implement CLI `dedupe` command with JSON report output — §14 (recomputes exact-duplicate groups from the persisted archive, replaces the store's groups, reports `duplicates_found`)
 - [x] Implement CLI `tag` command, local-only by default, requiring an explicit flag to use any cloud model — §14
 - [x] Implement machine-readable (JSON) result output including `cloud_ai_used` field — §14
 - [x] Implement the stable exit-code contract (0 SUCCESS, 1 PARTIAL_SUCCESS, 2 INDEXING_FAILED, 3 SEARCH_FAILED, 4 CONFIGURATION_ERROR, 5 INPUT_ERROR, 6 INTERNAL_ERROR) — §14
 
 ### Desktop UI (Tauri)
+- [x] Command layer over the same engine (`-tauri::TauriCommands` calls the same `-service::handlers` as the HTTP API: open-local data dir, reindex, run queue, job status, search, asset, health, health trend; DB file shared with the CLI). Screens below remain: the commands become `#[tauri::command]`s when the frontend lands.
 - [ ] Implement Archive Browser (grid/list, thumbnails, filter by technical metadata/tags/folder) — §13.1, §26 step 17
 - [ ] Implement Search screen (unified search bar, filter chips, per-result match explanation) — §13.2, §26 step 17
 - [ ] Implement Asset Inspector (file info, technical metadata, tags with source/confidence, derivative previews, duplicate-group membership) — §13.3, §26 step 17
@@ -125,7 +126,7 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 - [ ] Implement Indexing Queue screen (active/queued jobs, pause/resume/cancel) — §13.7, §26 step 19
 
 ### Local API (optional)
-- [x] Implement optional localhost-only API (127.0.0.1, never bound externally, disabled by default) with `/archives/:id/search`, `/assets/:id`, `/archives/:id/reindex`, `/jobs/:id`, `/health` — §15 (route contract + disabled-by-default gate; HTTP binding next)
+- [x] Implement optional localhost-only API (127.0.0.1, never bound externally, disabled by default) with `/archives/:id/search`, `/assets/:id`, `/archives/:id/reindex`, `/jobs/:id`, `/health` — §15 (dependency-free HTTP/1.1 `ServiceServer` over the queue+store, bound to `127.0.0.1:port` only; end-to-end test issues real reindex → job → search → asset requests)
 
 ### Security & Privacy
 - [x] Ensure no mandatory network access for indexing, deterministic search, or local-model tagging — §17 (workspace builds/tests fully offline; no network deps)
@@ -138,16 +139,16 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 ### Testing
 - [x] Unit tests per pipeline stage (fingerprinting, metadata extraction, derivative generation, duplicate detection, scene detection, tagging, search indexing): valid/invalid/boundary/malformed cases — §19.1 (41 unit tests green across all engine crates)
 - [x] Build golden fixture archives with documented expected index counts, duplicate groups, and scene boundaries across `synthetic-archive-small/`, `synthetic-archive-large/`, `duplicates/`, `corrupt/`, `mixed-formats/` — §19.2, §26 step 20; fixtures use open codecs only, plus a few H.264/AAC files in `mixed-formats/` solely to verify the unsupported-codec path (manifests + READMEs in place; byte fixtures generated next)
-- [ ] Build large synthetic-archive scale/performance regression test (indexing throughput, memory usage) — §19.3, §26 step 21
-- [ ] Implement AI-boundary tests: no network call during indexing/tagging/search with cloud AI disabled; enabling cloud AI requires the disclosure/confirmation flow; disabling cloud AI does not delete/invalidate prior local-model tags — §19.4, §26 step 22
-- [ ] Fuzz media container/metadata parsers, archive-config and search-query parsers, and CLI arguments, reusing `tpt-av-test` where possible — §19.5, §26 step 23
-- [ ] Establish regression-fixture policy: every production bug produces a permanent regression test — §19.6
+- [x] Build large synthetic-archive scale/performance regression test (indexing throughput, memory usage) — §19.3, §26 step 21 (`tests/scale/throughput.rs` regenerates `synthetic-archive-large` at runtime: 10,025 files, 1 duplicate group of 25, path-sorted Pass-1 output, throughput floor; counts documented in `fixtures/synthetic-archive-large/README.md`)
+- [x] Implement AI-boundary tests: no network call during indexing/tagging/search with cloud AI disabled; enabling cloud AI requires the disclosure/confirmation flow; disabling cloud AI does not delete/invalidate prior local-model tags — §19.4, §26 step 22 (`tests/integration/ai_boundary.rs`: defaults local-only, `CloudTaggingGate` opt-in, CLI `cloud_ai_used:false` + conflict refusal, settings-toggle preserves tag store)
+- [x] Fuzz media container/metadata parsers, archive-config and search-query parsers, and CLI arguments, reusing `tpt-av-test` where possible — §19.5, §26 step 23 (Deterministic seed-pinned proptests in `-test/src/fuzz.rs`: MKV demux, cadence WAV/FLAC/OggOpus/Vorbis readers, extension probe, search query, CLI args; `tpt-av-test-fuzz` regression corpus runs under `--features tpt`)
+- [x] Establish regression-fixture policy: every production bug produces a permanent regression test — §19.6 (`docs/regression-policy.md`: one bug one test, lowest-layer repro, permanent pinned fixtures, CI-enforced and `--all-targets`-linted)
 
 ### Hardening, Packaging & Beta
-- [ ] Harden error handling and failure isolation — §26 step 24
-- [ ] Package Windows release — §26 step 25
+- [x] Harden error handling and failure isolation — §26 step 24 (no `unwrap`/`expect` left in production code paths: CLI serialization degrades to `INTERNAL_ERROR`, `Store::list_archives` propagates decode errors instead of panicking, queue mutex poison maps to `QueueError::LockPoisoned`; `worker_panic_is_contained_and_job_stays_requeueable` proves a panicking worker never kills the process)
+- [x] Package Windows release — §26 step 25 (`scripts/package-windows.ps1` builds the release CLI and zips a versioned artifact; `.github/workflows/release.yml` runs the full gate then packages on `v*` tags; publishing to GitHub Releases/registries intentionally left unwired)
 - [ ] Validate against a real large local/NAS archive — §26 step 25
-- [ ] Test clean-machine installation without development tooling — §25
+- [ ] Test clean-machine installation without development tooling — §25 (release zip + `--version` smoke on a clean box)
 - [ ] Run a private beta with a real production company or archive team — §26
 
 ---
@@ -161,7 +162,7 @@ Decision: MVP supports **open, royalty-free codecs only**. H.264 and AAC are dro
 - [ ] Implement import of TPT Media QC pass/fail findings as searchable, filterable asset metadata — §5.3, §21
 - [ ] Implement import of TPT Media Forensics findings as archive metadata — §5.3, §21
 - [ ] Reuse existing TPT Voice Studio transcripts where a project has already been transcribed, instead of re-transcribing — §5.3
-- [ ] Implement richer archive-health trend reporting over time — §21
+- [ ] Implement richer archive-health trend reporting over time — §21 (engine done: `health::health_trend` turns store snapshot history into intervention/delta rows, `intervention_count`; UI screens pending)
 
 ---
 

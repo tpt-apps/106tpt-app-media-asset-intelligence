@@ -1,0 +1,15 @@
+[package]
+name = "tpt-app-media-asset-intelligence-persistence"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SQLite persistence for the media asset intelligence index (spec §16)"
+
+[dependencies]
+tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
+tpt-app-media-asset-intelligence-health = { path = "../tpt-app-media-asset-intelligence-health" }
+rusqlite.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+thiserror.workspace = true

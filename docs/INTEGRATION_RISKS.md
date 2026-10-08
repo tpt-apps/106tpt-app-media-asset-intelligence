@@ -8,11 +8,14 @@ wired as rev-pinned git dependencies (ecosystem convention per
 | Crate | Rev (master HEAD at wiring) | Used for |
 |---|---|---|
 | `tpt-av-asset` | `bb257b3` | AssetId/MediaInfo, AssetDb, CacheStorage, pipeline/importer, MediaWatcher |
-| `tpt-kinetix` | `dab6415` | MKV/WebM demux (`MkvDemuxer`), AV1/VP9 decoder crates available |
+| `tpt-kinetix` | `b904ff3` (bumped 2026-10-07 from `dab6415`, which was pre-master) | MKV/WebM demux (`MkvDemuxer`), AV1/VP9 decoder crates available |
 | `tpt-cadence` | `95ff6bf` | WAV/FLAC/Ogg-Opus/Vorbis readers via `FormatReader` |
 | `tpt-visual` | `7f79eb9` | `VideoFrame`/pixel types (scene/perceptual operate on decoded RGBA) |
 | `tpt-voice` | `05ffff3` | Phase 2 only (out of MVP §20) — not wired |
 | `tpt-av-test` | `4571941` | `reference` + `fuzz` harnesses (dev-deps of `-test`) |
+
+`tpt-kinetix` also appears as a transitive pin (`9747a2b`) from inside
+`tpt-av-test`'s own dependency tree; source revs coexist in the lockfile.
 
 Codec-scope verification: kinetix ships open codecs (AV1/VP9) plus a
 separate `out-kinetix-h264` crate that is NOT in our dependency tree;

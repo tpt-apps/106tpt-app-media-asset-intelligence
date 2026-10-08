@@ -17,7 +17,10 @@ tpt-app-media-asset-intelligence-scenes = { path = "../tpt-app-media-asset-intel
 tpt-app-media-asset-intelligence-tagging = { path = "../tpt-app-media-asset-intelligence-tagging" }
 tpt-app-media-asset-intelligence-search = { path = "../tpt-app-media-asset-intelligence-search" }
 tpt-app-media-asset-intelligence-health = { path = "../tpt-app-media-asset-intelligence-health" }
+tpt-app-media-asset-intelligence-persistence = { path = "../tpt-app-media-asset-intelligence-persistence" }
+tpt-app-media-asset-intelligence-queue = { path = "../tpt-app-media-asset-intelligence-queue" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+uuid.workspace = true

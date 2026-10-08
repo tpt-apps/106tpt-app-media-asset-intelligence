@@ -8,6 +8,8 @@ members = [
   "crates/tpt-app-media-asset-intelligence-tagging",
   "crates/tpt-app-media-asset-intelligence-search",
   "crates/tpt-app-media-asset-intelligence-health",
+  "crates/tpt-app-media-asset-intelligence-persistence",
+  "crates/tpt-app-media-asset-intelligence-queue",
   "crates/tpt-app-media-asset-intelligence-cli",
   "crates/tpt-app-media-asset-intelligence-service",
   "crates/tpt-app-media-asset-intelligence-tauri",
@@ -42,10 +44,10 @@ tpt-av-asset-cache = { git = "https://github.com/tpt-solutions/tpt-av-asset", re
 tpt-av-asset-proxy = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
 tpt-av-asset-watcher = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
 tpt-av-asset-pipeline = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d" }
-tpt-kinetix-core = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
-tpt-kinetix-demux = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
-tpt-kinetix-av1 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
-tpt-kinetix-vp9 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "dab64158b6760eb186d544e4e49a8a1d2f611ff0" }
+tpt-kinetix-core = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "b904ff31fd90fb8ffdc6bd2a00594767e1eb3e91" }
+tpt-kinetix-demux = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "b904ff31fd90fb8ffdc6bd2a00594767e1eb3e91" }
+tpt-kinetix-av1 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "b904ff31fd90fb8ffdc6bd2a00594767e1eb3e91" }
+tpt-kinetix-vp9 = { git = "https://github.com/tpt-solutions/tpt-kinetix", rev = "b904ff31fd90fb8ffdc6bd2a00594767e1eb3e91" }
 tpt-av-cadence-core = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
 tpt-av-cadence-wav = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }
 tpt-av-cadence-flac = { git = "https://github.com/tpt-solutions/tpt-cadence", rev = "95ff6bf9349641d4cecfc15a3bd191fa228b5617" }

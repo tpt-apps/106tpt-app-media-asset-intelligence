@@ -10,6 +10,9 @@ tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intell
 tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intelligence-ingest" }
 tpt-app-media-asset-intelligence-search = { path = "../tpt-app-media-asset-intelligence-search" }
 tpt-app-media-asset-intelligence-health = { path = "../tpt-app-media-asset-intelligence-health" }
+tpt-app-media-asset-intelligence-persistence = { path = "../tpt-app-media-asset-intelligence-persistence" }
+tpt-app-media-asset-intelligence-queue = { path = "../tpt-app-media-asset-intelligence-queue" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+uuid.workspace = true

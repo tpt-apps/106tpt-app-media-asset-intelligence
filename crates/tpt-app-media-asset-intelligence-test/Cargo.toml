@@ -11,6 +11,11 @@ tpt = [
   "dep:tpt-av-test-reference",
   "dep:tpt-av-test-fuzz",
   "dep:tpt-kinetix-demux",
+  "dep:tpt-av-cadence-core",
+  "dep:tpt-av-cadence-wav",
+  "dep:tpt-av-cadence-flac",
+  "dep:tpt-av-cadence-opus",
+  "dep:tpt-av-cadence-vorbis",
   "tpt-app-media-asset-intelligence-ingest/tpt",
   "tpt-app-media-asset-intelligence-model/tpt",
   "tpt-app-media-asset-intelligence-dedupe/tpt",
@@ -24,12 +29,25 @@ tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intel
 tpt-app-media-asset-intelligence-dedupe = { path = "../tpt-app-media-asset-intelligence-dedupe" }
 tpt-app-media-asset-intelligence-scenes = { path = "../tpt-app-media-asset-intelligence-scenes" }
 tpt-app-media-asset-intelligence-search = { path = "../tpt-app-media-asset-intelligence-search" }
+tpt-app-media-asset-intelligence-cli = { path = "../tpt-app-media-asset-intelligence-cli" }
+tpt-app-media-asset-intelligence-tagging = { path = "../tpt-app-media-asset-intelligence-tagging" }
+tpt-app-media-asset-intelligence-service = { path = "../tpt-app-media-asset-intelligence-service" }
+tpt-app-media-asset-intelligence-persistence = { path = "../tpt-app-media-asset-intelligence-persistence" }
+tpt-app-media-asset-intelligence-queue = { path = "../tpt-app-media-asset-intelligence-queue" }
 uuid.workspace = true
+chrono.workspace = true
 proptest.workspace = true
+clap.workspace = true
+serde_json.workspace = true
 tpt-av-asset-test-media = { git = "https://github.com/tpt-solutions/tpt-av-asset", rev = "bb257b3afb3b911ab5f584c212c7603c3df1551d", optional = true }
 tpt-av-test-reference = { git = "https://github.com/tpt-solutions/tpt-av-test", rev = "4571941191129d70eab5a00c093fbd4928e262ae", optional = true }
 tpt-av-test-fuzz = { git = "https://github.com/tpt-solutions/tpt-av-test", rev = "4571941191129d70eab5a00c093fbd4928e262ae", optional = true }
 tpt-kinetix-demux = { workspace = true, optional = true }
+tpt-av-cadence-core = { workspace = true, optional = true }
+tpt-av-cadence-wav = { workspace = true, optional = true }
+tpt-av-cadence-flac = { workspace = true, optional = true }
+tpt-av-cadence-opus = { workspace = true, optional = true }
+tpt-av-cadence-vorbis = { workspace = true, optional = true }
 
 [[test]]
 name = "pipeline"
@@ -47,3 +65,15 @@ path = "../../tests/scale/throughput.rs"
 name = "real_decode"
 path = "../../tests/integration/real_decode.rs"
 required-features = ["tpt"]
+
+[[test]]
+name = "ai_boundary"
+path = "../../tests/integration/ai_boundary.rs"
+
+[[test]]
+name = "persistence_durability"
+path = "../../tests/integration/persistence.rs"
+
+[[test]]
+name = "queue_resume"
+path = "../../tests/integration/queue.rs"

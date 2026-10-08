@@ -1,6 +1,6 @@
 //! Test helpers: synthetic archive manifests for golden/scale tests (spec §19).
 
-#[cfg(feature = "tpt")]
+#[cfg(all(test, feature = "tpt"))]
 pub mod fuzz;
 
 use std::collections::HashMap;

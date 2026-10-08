@@ -1,11 +1,28 @@
 //! CLI: index / search / dedupe / tag over the shared engine (spec §14).
-//! Local-only by default; cloud paths require explicit flags. Exit codes
-//! are stable: 0 SUCCESS, 1 PARTIAL, 2 INDEXING_FAILED, 3 SEARCH_FAILED,
-//! 4 CONFIGURATION_ERROR, 5 INPUT_ERROR, 6 INTERNAL_ERROR.
+//! Same engine as the GUI: `index` enqueues a durable job on the SQLite
+//! store through the job queue, persists assets + archive-health snapshots,
+//! and reconciles exact-duplicate groups. Local-only by default; cloud paths
+//! require explicit flags. Exit codes are stable: 0 SUCCESS, 1 PARTIAL,
+//! 2 INDEXING_FAILED, 3 SEARCH_FAILED, 4 CONFIGURATION_ERROR, 5 INPUT_ERROR,
+//! 6 INTERNAL_ERROR.
 
 use clap::{Parser, Subcommand};
 use serde::Serialize;
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use uuid::Uuid;
+
+use tpt_app_media_asset_intelligence_dedupe::exact_duplicates;
+use tpt_app_media_asset_intelligence_model::{AiSettings, Archive, Asset, SearchIndexEntry};
+use tpt_app_media_asset_intelligence_persistence::job::JobStatus;
+use tpt_app_media_asset_intelligence_persistence::Store;
+use tpt_app_media_asset_intelligence_queue::JobQueue;
+use tpt_app_media_asset_intelligence_search::{explain_match, matches, parse_query};
+
+/// Data directory override (also honored: `TMAI_DATA_DIR`, then
+/// `%LOCALAPPDATA%`/home).
+const DATA_DIR_ENV: &str = "TMAI_DATA_DIR";
+const DB_FILE: &str = "tptmai.sqlite";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(i32)]
@@ -26,13 +43,17 @@ pub enum ExitCode {
     about = "Local-first media archive intelligence"
 )]
 pub struct Cli {
+    /// Where the archive database lives (default: platform app-data dir).
+    #[arg(long, global = true, value_name = "DIR")]
+    pub data_dir: Option<PathBuf>,
+
     #[command(subcommand)]
     pub command: Commands,
 }
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Index an archive from one or more roots.
+    /// Index an archive from one or more roots (durable, resumable).
     Index {
         #[arg(long)]
         archive: String,
@@ -46,7 +67,7 @@ pub enum Commands {
         #[arg(long)]
         query: String,
     },
-    /// Report duplicate groups as JSON.
+    /// Recompute and persist exact-duplicate groups, reporting them as JSON.
     Dedupe {
         #[arg(long)]
         archive: String,
@@ -67,53 +88,177 @@ pub enum Commands {
 #[derive(Debug, Serialize)]
 pub struct MachineReport {
     pub archive: String,
+    pub archive_id: String,
     pub assets_indexed: usize,
     pub duplicates_found: usize,
     pub cloud_ai_used: bool,
 }
 
+fn default_data_dir() -> PathBuf {
+    if let Some(d) = std::env::var_os(DATA_DIR_ENV) {
+        return PathBuf::from(d);
+    }
+    if let Some(app) = std::env::var_os("LOCALAPPDATA") {
+        return PathBuf::from(app).join("tpt-media-asset-intelligence");
+    }
+    if let Some(home) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) {
+        return PathBuf::from(home).join(".tpt-media-asset-intelligence");
+    }
+    PathBuf::from(".")
+}
+
+fn db_file(data_dir: &Path) -> PathBuf {
+    data_dir.join(DB_FILE)
+}
+
+/// Open the store + queue for a data directory, creating it if needed.
+fn open_queue(data_dir: &Path) -> Result<JobQueue, String> {
+    std::fs::create_dir_all(data_dir).map_err(|e| format!("data dir {data_dir:?}: {e}"))?;
+    JobQueue::open(&db_file(data_dir)).map_err(|e| e.to_string())
+}
+
+/// The archive named `name`, or None. Name collisions resolve to the first.
+fn archive_by_name(store: &Store, name: &str) -> Result<Option<Archive>, String> {
+    store
+        .list_archives()
+        .map(|a| a.into_iter().find(|a| a.name == name))
+        .map_err(|e| format!("store: {e}"))
+}
+
+fn find_or_create_archive(store: &Store, name: &str, roots: &[PathBuf]) -> Result<Archive, String> {
+    if let Some(mut a) = archive_by_name(store, name)? {
+        if !roots.is_empty() {
+            let mut all = a.roots.clone();
+            all.extend_from_slice(roots);
+            all.sort();
+            all.dedup();
+            a.roots = all;
+            store
+                .upsert_archive(&a)
+                .map_err(|e| format!("store: {e}"))?;
+        }
+        return Ok(a);
+    }
+    if roots.is_empty() {
+        return Err(format!("archive '{name}' not found"));
+    }
+    let a = Archive {
+        id: Uuid::new_v4(),
+        name: name.to_string(),
+        roots: roots.to_vec(),
+        watch_enabled: false,
+        ai_settings: AiSettings::default(),
+    };
+    store
+        .upsert_archive(&a)
+        .map_err(|e| format!("store: {e}"))?;
+    Ok(a)
+}
+
+/// Persist the current exact-duplicate groups for an archive, replacing the
+/// previous run's groups (recomputing is the CLI semantics, §8).
+fn reconcile_duplicate_groups(
+    queue: &JobQueue,
+    archive_id: Uuid,
+    assets: &[Asset],
+) -> Result<usize, String> {
+    let store = queue.store();
+    let fingerprints: HashMap<Uuid, String> = assets
+        .iter()
+        .map(|a| (a.id, a.fingerprint.clone()))
+        .collect();
+    let groups = exact_duplicates(&fingerprints);
+    let store = store
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
+    for old in store
+        .duplicate_groups_for_archive(archive_id)
+        .map_err(|e| e.to_string())?
+    {
+        store
+            .delete_duplicate_group(old.id)
+            .map_err(|e| e.to_string())?;
+    }
+    for g in &groups {
+        store.upsert_duplicate_group(g).map_err(|e| e.to_string())?;
+    }
+    Ok(groups.len())
+}
+
+fn entry_for_asset(store: &Store, asset: &Asset) -> SearchIndexEntry {
+    let filename = asset
+        .path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let tags = store
+        .tags_for_asset(asset.id)
+        .map(|tags| {
+            tags.into_iter()
+                .filter(|(_, t)| !t.rejected)
+                .map(|(_, t)| t.label)
+                .collect()
+        })
+        .unwrap_or_default();
+    SearchIndexEntry {
+        asset_id: asset.id,
+        filename,
+        codec: asset.technical_metadata.codec.clone(),
+        tags,
+        notes: String::new(),
+    }
+}
+
 pub fn run(cli: Cli) -> (ExitCode, String) {
-    match cli.command {
+    let data_dir = cli.data_dir.clone().unwrap_or_else(default_data_dir);
+    run_with(&data_dir, cli.command)
+}
+
+fn run_with(data_dir: &Path, command: Commands) -> (ExitCode, String) {
+    match command {
         Commands::Index { archive, roots } => {
             if roots.is_empty() {
                 return (ExitCode::InputError, "no --roots provided".to_string());
             }
-            let (found, errors) = tpt_app_media_asset_intelligence_ingest::scan_roots(&roots);
-            let report = MachineReport {
-                archive,
-                assets_indexed: found.len(),
-                duplicates_found: 0,
-                cloud_ai_used: false,
+            let queue = match open_queue(data_dir) {
+                Ok(q) => q,
+                Err(e) => return (ExitCode::ConfigurationError, e),
             };
-            let mut out = serde_json::to_string_pretty(&report).unwrap();
-            for e in &errors {
-                out.push_str(&format!("\nwarning: {e}"));
+            match run_index(&queue, &archive, &roots) {
+                Ok(report) => match serde_json::to_string_pretty(&report) {
+                    Ok(out) => (ExitCode::Success, out),
+                    Err(_) => (ExitCode::InternalError, "failed to serialize report".into()),
+                },
+                Err(e) => (ExitCode::IndexingFailed, e),
             }
-            let code = if errors.is_empty() {
-                ExitCode::Success
-            } else {
-                ExitCode::PartialSuccess
-            };
-            (code, out)
         }
-        Commands::Search { archive: _, query } => {
-            match tpt_app_media_asset_intelligence_search::parse_query(&query) {
-                Ok(q) => (
-                    ExitCode::Success,
-                    format!("parsed {} clause(s)", q.clauses.len()),
-                ),
-                Err(e) => (ExitCode::SearchFailed, format!("query error: {e}")),
+        Commands::Search { archive, query } => {
+            let q = match parse_query(&query) {
+                Ok(q) => q,
+                Err(e) => return (ExitCode::SearchFailed, format!("query error: {e}")),
+            };
+            let queue = match open_queue(data_dir) {
+                Ok(q) => q,
+                Err(e) => return (ExitCode::ConfigurationError, e),
+            };
+            match run_search(&queue, &archive, &q) {
+                Ok(out) => (ExitCode::Success, out),
+                Err(e) => (ExitCode::ConfigurationError, e),
             }
         }
         Commands::Dedupe { archive, report: _ } => {
-            let out = serde_json::to_string_pretty(&MachineReport {
-                archive,
-                assets_indexed: 0,
-                duplicates_found: 0,
-                cloud_ai_used: false,
-            })
-            .unwrap();
-            (ExitCode::Success, out)
+            let queue = match open_queue(data_dir) {
+                Ok(q) => q,
+                Err(e) => return (ExitCode::ConfigurationError, e),
+            };
+            let report = match run_dedupe(&queue, &archive) {
+                Ok(r) => r,
+                Err(e) => return (ExitCode::IndexingFailed, e),
+            };
+            match serde_json::to_string_pretty(&report) {
+                Ok(out) => (ExitCode::Success, out),
+                Err(_) => (ExitCode::InternalError, "failed to serialize report".into()),
+            }
         }
         Commands::Tag {
             archive: _,
@@ -138,9 +283,111 @@ pub fn run(cli: Cli) -> (ExitCode, String) {
     }
 }
 
+fn run_index(queue: &JobQueue, archive: &str, roots: &[PathBuf]) -> Result<MachineReport, String> {
+    let store = queue
+        .store()
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
+    let a = find_or_create_archive(&store, archive, roots)?;
+    drop(store);
+
+    let job_id = queue.enqueue_index(a.id).map_err(|e| e.to_string())?;
+    queue
+        .run_until_idle()
+        .map_err(|e| format!("indexing failed: {e}"))?;
+
+    let store = queue
+        .store()
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
+    let job = store
+        .get_job(job_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "index job disappeared".to_string())?;
+    if job.status == JobStatus::Failed {
+        return Err(job.error.unwrap_or_else(|| "index job failed".into()));
+    }
+    let assets = store.assets_for_archive(a.id).map_err(|e| e.to_string())?;
+    let assets_indexed = assets.len();
+    drop(store);
+
+    let duplicates_found = reconcile_duplicate_groups(queue, a.id, &assets)?;
+
+    Ok(MachineReport {
+        archive: archive.to_string(),
+        archive_id: a.id.to_string(),
+        assets_indexed,
+        duplicates_found,
+        cloud_ai_used: false,
+    })
+}
+
+fn run_search(
+    queue: &JobQueue,
+    archive: &str,
+    query: &tpt_app_media_asset_intelligence_search::Query,
+) -> Result<String, String> {
+    let store = queue
+        .store()
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
+    let a = archive_by_name(&store, archive)?
+        .ok_or_else(|| format!("archive '{archive}' not found"))?;
+    let assets = store.assets_for_archive(a.id).map_err(|e| e.to_string())?;
+    let mut out = String::new();
+    let mut hits = 0usize;
+    for asset in &assets {
+        let entry = entry_for_asset(&store, asset);
+        if matches(&entry, query) {
+            let reasons = explain_match(&entry, query).join("; ");
+            out.push_str(&format!(
+                "{}{}\n",
+                asset.path.display(),
+                if reasons.is_empty() {
+                    String::new()
+                } else {
+                    format!("  [{reasons}]")
+                }
+            ));
+            hits += 1;
+        }
+    }
+    out.push_str(&format!("{hits} match(es)"));
+    Ok(out)
+}
+
+fn run_dedupe(queue: &JobQueue, archive: &str) -> Result<MachineReport, String> {
+    let store = queue
+        .store()
+        .lock()
+        .map_err(|_| "store lock poisoned".to_string())?;
+    let a = archive_by_name(&store, archive)?
+        .ok_or_else(|| format!("archive '{archive}' not found"))?;
+    let assets = store.assets_for_archive(a.id).map_err(|e| e.to_string())?;
+    let assets_count = assets.len();
+    drop(store);
+
+    let duplicates_found = reconcile_duplicate_groups(queue, a.id, &assets)?;
+
+    Ok(MachineReport {
+        archive: archive.to_string(),
+        archive_id: a.id.to_string(),
+        assets_indexed: assets_count,
+        duplicates_found,
+        cloud_ai_used: false,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
+    fn temp_root(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("mai-cli-{tag}-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
 
     #[test]
     fn index_requires_roots() {
@@ -176,5 +423,87 @@ mod tests {
         assert_eq!(ExitCode::ConfigurationError as i32, 4);
         assert_eq!(ExitCode::InputError as i32, 5);
         assert_eq!(ExitCode::InternalError as i32, 6);
+    }
+
+    #[test]
+    fn index_persists_assets_and_duplicates() {
+        let roots = temp_root("index");
+        fs::write(roots.join("a.mkv"), [0u8; 16]).unwrap();
+        fs::write(roots.join("b.mkv"), [0u8; 16]).unwrap(); // same bytes → duplicate group
+        fs::write(roots.join("c.txt"), b"unique").unwrap();
+        let data_dir = temp_root("index-data");
+
+        let cli = Cli::parse_from([
+            "t",
+            "index",
+            "--data-dir",
+            data_dir.to_str().unwrap(),
+            "--archive",
+            "main",
+            "--roots",
+            roots.to_str().unwrap(),
+        ]);
+        let (code, out) = run(cli);
+        let _ = fs::remove_dir_all(&roots);
+        assert_eq!(code, ExitCode::Success);
+        let report: serde_json::Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(report["assets_indexed"], 3);
+        assert_eq!(report["duplicates_found"], 1);
+        assert!(!report["cloud_ai_used"].as_bool().unwrap());
+        let _ = fs::remove_dir_all(&data_dir);
+    }
+
+    #[test]
+    fn search_returns_matches_from_the_persisted_archive() {
+        let roots = temp_root("search");
+        fs::write(roots.join("interview.mkv"), b"aaa").unwrap();
+        fs::write(roots.join("b-roll.mkv"), b"bbb").unwrap();
+        let data_dir = temp_root("search-data");
+
+        let index = Cli::parse_from([
+            "t",
+            "index",
+            "--data-dir",
+            data_dir.to_str().unwrap(),
+            "--archive",
+            "news",
+            "--roots",
+            roots.to_str().unwrap(),
+        ]);
+        assert_eq!(run(index).0, ExitCode::Success);
+
+        let search = Cli::parse_from([
+            "t",
+            "search",
+            "--data-dir",
+            data_dir.to_str().unwrap(),
+            "--archive",
+            "news",
+            "--query",
+            "interview",
+        ]);
+        let (code, out) = run(search);
+        let _ = fs::remove_dir_all(&roots);
+        assert_eq!(code, ExitCode::Success);
+        assert!(out.contains("interview.mkv"));
+        assert!(!out.contains("b-roll.mkv"));
+        let _ = fs::remove_dir_all(&data_dir);
+    }
+
+    #[test]
+    fn search_for_missing_archive_is_configuration_error() {
+        let data_dir = temp_root("search-missing");
+        let search = Cli::parse_from([
+            "t",
+            "search",
+            "--data-dir",
+            data_dir.to_str().unwrap(),
+            "--archive",
+            "ghost",
+            "--query",
+            "anything",
+        ]);
+        assert!(matches!(run(search).0, ExitCode::ConfigurationError));
+        let _ = fs::remove_dir_all(&data_dir);
     }
 }

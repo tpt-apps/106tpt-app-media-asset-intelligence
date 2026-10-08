@@ -1,16 +1,14 @@
 [package]
-name = "tpt-app-media-asset-intelligence-tauri"
+name = "tpt-app-media-asset-intelligence-queue"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
 tpt-app-media-asset-intelligence-model = { path = "../tpt-app-media-asset-intelligence-model" }
+tpt-app-media-asset-intelligence-ingest = { path = "../tpt-app-media-asset-intelligence-ingest" }
 tpt-app-media-asset-intelligence-health = { path = "../tpt-app-media-asset-intelligence-health" }
 tpt-app-media-asset-intelligence-persistence = { path = "../tpt-app-media-asset-intelligence-persistence" }
-tpt-app-media-asset-intelligence-queue = { path = "../tpt-app-media-asset-intelligence-queue" }
-tpt-app-media-asset-intelligence-service = { path = "../tpt-app-media-asset-intelligence-service" }
-serde.workspace = true
-serde_json.workspace = true
+chrono.workspace = true
 thiserror.workspace = true
 uuid.workspace = true

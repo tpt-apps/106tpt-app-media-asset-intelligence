@@ -1,4 +1,17 @@
 # synthetic-archive-large (open codecs only)
 
-Scale/performance fixture (§19.3): generated set of AV1/VP9/Opus/FLAC files for
-indexing-throughput and memory regression tests. Documents asset counts on generation.
+Scale/performance fixture (§19.3): generated set of distinct-byte files for
+indexing-throughput and memory regression tests.
+
+Counts documented on generation:
+
+- Regenerated at runtime by `tests/scale/throughput.rs` into a temp dir
+  (no committed binaries).
+- `UNIQUE_FILES = 10_000` unique files, `clip_000000.bin`… `clip_009999.bin`.
+- `DUPLICATE_CLUSTER = 25` exact duplicates under `duplicates/` (one
+  `sha256` fingerprint cluster) — golden expectation: **10_025 indexed
+  assets, exactly 1 exact-hash duplicate group of size 25**.
+- Fixture bytes are content-formatted (`unique-content-…`,
+  `identical-block-of-bytes`) so fingerprints are deterministic.
+
+Run: `cargo test --test scale_throughput`.
